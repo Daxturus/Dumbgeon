@@ -1,0 +1,165 @@
+<canvas id="screen" width="500" height="560"></canvas>
+ <meta charset="UTF-8"> 
+<script>
+var screen = document.getElementById('screen');
+var canvas = screen.getContext('2d');
+
+var mouseDown = false;
+document.body.onmousedown = function() { 
+  mouseDown = true
+}
+document.body.onmouseup = function() {
+  mouseDown = false
+}
+
+
+
+
+
+
+
+var lines = [[]]
+
+document.onkeypress = function (e)
+{
+	if (e.key == "J" ||  e.key == "j")
+	{
+		var maxX = screen.width
+		var maxY = screen.width
+		var minX = 0
+		var minY = 0
+		for (var i = 0; i < lines.length; i++)
+		{
+			if (lines[i].length > 0)
+			{
+				for (var j = 0; j < lines[i].length; j++)
+				{
+					if (maxX < lines[i][j][0])
+					{
+						maxX = lines[i][j][0]
+					}
+					if (maxY < lines[i][j][1])
+					{
+						maxY = lines[i][j][1]
+					}
+					if (minX > lines[i][j][0])
+					{
+						minX = lines[i][j][0]
+					}
+					if (minY > lines[i][j][1])
+					{
+						minY = lines[i][j][1]
+					}
+				}
+			}
+		}
+		var lines2 = []
+		for (var i = 0; i < lines.length; i++)
+		{
+			var lineOut = []
+			for (var j = 0; j < lines[i].length; j++)
+			{
+				lineOut.push([Math.round((lines[i][j][0]-minX)/maxX*1000)/1000,Math.round((lines[i][j][1]-minY)/maxY*1000)/1000])
+			}
+			lines2.push(lineOut)
+		}
+		var out = JSON.stringify(lines2)
+		alert("Copy paste this to save or share: "+out)
+	}
+}
+
+var cursorX = 0
+var cursorY = 0
+var prevX = 0
+var prevY = 0
+var drawing = false
+var lineID = 0
+
+document.onmousemove = function (e) {
+	rect = screen.getBoundingClientRect()
+	cursorX = e.clientX - rect.left;
+	cursorY = e.clientY - rect.top;
+}
+
+//yes i stole this 60fps code, havent used JS for a while now
+//credit to MarkE and Klaider
+var stop = false;
+var frameCount = 0;
+var fps, fpsInterval, startTime, now, then, elapsed;
+
+
+function startAnimating(fps) {
+    fpsInterval = 1000 / fps;
+    then = Date.now();
+    startTime = then;
+    animate();
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    now = Date.now();
+    elapsed = now - then;
+    if (elapsed > fpsInterval) {
+        then = now - (elapsed % fpsInterval);
+		
+		
+		//getCursorXY()
+		canvas.fillStyle = "#ffffff"
+		canvas.fillRect(0,0,screen.width,screen.height)
+		if (drawing == true)
+		{
+			//yes i know i could just append to lines and then later access the line at the last index. but i dont often do this so i decided to give it a try
+			if (!mouseDown)
+			{
+				lineID = lineID + 1
+				lines.push([])
+				drawing = false
+			}
+		}
+		if (mouseDown && cursorX != prevX && cursorY != prevY)
+		{
+			drawing = true
+			lines[lineID].push([cursorX,cursorY])
+			prevX = cursorX
+			prevY = cursorY
+		}
+		canvas.strokeStyle = "#000000"
+		canvas.beginPath()
+		canvas.rect(0,0,screen.width, screen.width)
+		canvas.stroke()
+		for (var i = 0; i < lines.length; i++)
+		{
+			if (lines[i].length > 0)
+			{
+				canvas.beginPath()
+				canvas.moveTo(lines[i][0][0],lines[i][0][1])
+				for (var j = 1; j < lines[i].length; j++)
+				{
+					canvas.lineTo(lines[i][j][0],lines[i][j][1])
+				}
+				canvas.stroke()
+			}
+		}
+		canvas.fillStyle = "#000000"
+		canvas.fillText( "Your masterpiece here.", 0,screen.width + 10)
+		canvas.fillText( "Press J to export to JSON", 0,screen.width + 30)
+		canvas.fillText( "Quality is never the answer.", 0,screen.width + 50)
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+    }
+}
+startAnimating(60);
+
+</script>
