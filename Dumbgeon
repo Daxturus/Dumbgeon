@@ -1,0 +1,1645 @@
+<canvas id="screen" width="600" height="400"></canvas>  
+<meta charset="UTF-8"> 
+<script type="text/javascript">
+	document.getElementById('screen').style.cursor = "none";
+</script>
+<script>
+var screen = document.getElementById('screen');
+var canvas = screen.getContext('2d');
+
+var keysBeingPressed = []
+
+var mouseDown = false;
+var clickPosX;
+var clickPosY;
+var draggingObjectUUID;
+
+var cursorX = 0
+var cursorY = 0
+var scrollY = 0
+//var scrollX = 0 //no need for this now
+
+var mouseWheelDeltaYFrame = 0
+
+window.addEventListener("wheel", event => mouseWheelDeltaYFrame = mouseWheelDeltaYFrame + event.deltaY);
+
+
+
+var cameraX = 0 
+var cameraY = 0
+var zoomsize = 25
+var maxActions = 1500
+var prevPlacedPosX;
+var prevPlacedPosY;
+var paintingUUID = -2
+
+var DrawingUUIDCounter = -1
+var ObjectUUIDCounter = -1
+var selectedObjectUUID = -1
+
+var drawJitter = 0.3
+
+var prevActions = []
+var objects = []
+var terrain = []
+var drawings = []
+drawings.push([JSON.parse("[[[0.006,0.008],[0.016,0.028],[0.03,0.058],[0.062,0.116],[0.154,0.232],[0.3,0.388],[0.438,0.526],[0.542,0.626],[0.644,0.716],[0.746,0.796],[0.826,0.866],[0.864,0.9],[0.914,0.94],[0.944,0.966],[0.964,0.986],[0.968,0.992]],[[0.018,0.984],[0.022,0.98],[0.028,0.976],[0.038,0.97],[0.058,0.952],[0.088,0.924],[0.124,0.89],[0.172,0.836],[0.264,0.764],[0.334,0.704],[0.438,0.618],[0.534,0.522],[0.614,0.44],[0.674,0.376],[0.71,0.338],[0.746,0.3],[0.776,0.264],[0.788,0.244],[0.798,0.228],[0.814,0.21],[0.848,0.19],[0.858,0.184],[0.86,0.18],[0.866,0.172],[0.884,0.158],[0.906,0.144],[0.918,0.134],[0.922,0.13],[0.924,0.124],[0.93,0.116],[0.952,0.092],[0.966,0.074],[0.974,0.062]],[]]"),-1])
+drawings.push([JSON.parse("[[[0.034,0.03],[0.038,0.068],[0.042,0.086],[0.044,0.13],[0.05,0.162],[0.056,0.226],[0.058,0.25],[0.062,0.304],[0.064,0.334],[0.066,0.366],[0.068,0.4],[0.072,0.432],[0.074,0.46],[0.076,0.494],[0.092,0.656],[0.1,0.702],[0.104,0.732],[0.108,0.754],[0.11,0.784],[0.116,0.818],[0.126,0.86],[0.13,0.886],[0.134,0.898],[0.14,0.948],[0.146,0.964],[0.148,0.968]],[[0.03,0.03],[0.168,0.018],[0.296,0.028],[0.356,0.038],[0.394,0.042],[0.46,0.044],[0.612,0.052],[0.642,0.054],[0.806,0.052],[0.878,0.048],[0.912,0.046],[0.922,0.044],[0.93,0.042]],[[0.932,0.05],[0.928,0.06],[0.932,0.13],[0.936,0.172],[0.94,0.206],[0.944,0.278],[0.948,0.314],[0.952,0.342],[0.954,0.364],[0.95,0.562],[0.948,0.658],[0.946,0.692],[0.942,0.714],[0.94,0.76],[0.936,0.824],[0.934,0.872],[0.936,0.886],[0.938,0.9]],[[0.044,0.19],[0.058,0.192],[0.07,0.194],[0.134,0.19],[0.23,0.2],[0.296,0.206],[0.448,0.21],[0.48,0.214],[0.604,0.212],[0.66,0.21],[0.76,0.208],[0.772,0.206],[0.774,0.204],[0.828,0.202],[0.846,0.2],[0.878,0.198],[0.888,0.196],[0.902,0.194],[0.926,0.19],[0.966,0.188]],[[0.24,0.024],[0.244,0.032],[0.248,0.058],[0.266,0.116],[0.272,0.132],[0.276,0.142],[0.28,0.158],[0.286,0.178],[0.29,0.198],[0.292,0.208],[0.294,0.218]],[[0.554,0.04],[0.556,0.052],[0.558,0.074],[0.564,0.112],[0.566,0.132],[0.57,0.15],[0.574,0.178],[0.576,0.21],[0.58,0.224]],[[0.822,0.046],[0.826,0.116],[0.834,0.164],[0.836,0.18],[0.84,0.194]],[[0.186,0.2],[0.188,0.238],[0.19,0.418]],[[0.07,0.394],[0.118,0.388],[0.152,0.386],[0.282,0.378],[0.44,0.382],[0.684,0.386],[0.718,0.39],[0.85,0.388],[0.898,0.384],[0.936,0.38],[0.978,0.374],[0.984,0.372]],[[0.46,0.22],[0.458,0.248],[0.462,0.286],[0.47,0.31],[0.472,0.326],[0.476,0.342],[0.478,0.348],[0.48,0.39]],[[0.726,0.218],[0.746,0.318],[0.752,0.338],[0.754,0.348],[0.756,0.354],[0.758,0.366],[0.76,0.372]],[[0.09,0.622],[0.158,0.618],[0.228,0.616],[0.476,0.618],[0.61,0.616],[0.694,0.614],[0.75,0.606],[0.802,0.598],[0.884,0.6],[0.924,0.602],[0.932,0.604],[0.94,0.608],[0.956,0.614]],[[0.32,0.38],[0.322,0.41],[0.348,0.46],[0.368,0.492],[0.378,0.512],[0.382,0.53],[0.384,0.546],[0.386,0.554]],[[0.628,0.384],[0.632,0.428],[0.634,0.456],[0.638,0.492],[0.64,0.532],[0.642,0.56],[0.646,0.606]],[[0.236,0.612],[0.234,0.618],[0.232,0.638],[0.228,0.65],[0.226,0.664],[0.228,0.822],[0.234,0.826]],[[0.528,0.622],[0.532,0.67],[0.538,0.722],[0.548,0.784],[0.552,0.808],[0.554,0.826],[0.562,0.88],[0.564,0.888],[0.566,0.89]],[[0.836,0.6],[0.832,0.612],[0.83,0.628],[0.828,0.684],[0.826,0.84]],[]]"),-2])
+drawings.push([JSON.parse("[[[0.422,0.432],[0.408,0.422],[0.388,0.408],[0.368,0.396],[0.354,0.386],[0.348,0.382],[0.344,0.376],[0.33,0.366],[0.308,0.354],[0.294,0.346],[0.284,0.342],[0.248,0.346],[0.238,0.348],[0.228,0.354],[0.216,0.358],[0.208,0.366],[0.204,0.372],[0.202,0.386],[0.198,0.414],[0.196,0.42],[0.198,0.446],[0.2,0.456],[0.204,0.46],[0.206,0.466],[0.214,0.476],[0.222,0.486],[0.234,0.494],[0.242,0.5],[0.248,0.504],[0.256,0.512],[0.266,0.522],[0.28,0.532],[0.29,0.538],[0.298,0.54],[0.308,0.546],[0.32,0.552],[0.33,0.558],[0.334,0.56],[0.338,0.562],[0.346,0.566],[0.354,0.572],[0.358,0.576]],[[0.366,0.396],[0.368,0.374],[0.364,0.324],[0.36,0.306],[0.358,0.272],[0.356,0.246],[0.358,0.232],[0.362,0.22],[0.366,0.204],[0.368,0.188],[0.372,0.18],[0.374,0.174],[0.38,0.166],[0.382,0.164],[0.386,0.16],[0.388,0.158],[0.396,0.156],[0.404,0.154],[0.416,0.152],[0.458,0.156],[0.472,0.16],[0.48,0.162],[0.488,0.166],[0.494,0.174],[0.502,0.182],[0.506,0.19],[0.508,0.2],[0.514,0.222],[0.518,0.242],[0.52,0.262],[0.522,0.278],[0.524,0.34],[0.522,0.374],[0.52,0.388]],[[0.516,0.276],[0.518,0.272],[0.528,0.258],[0.536,0.25],[0.546,0.242],[0.568,0.236],[0.586,0.232],[0.594,0.228],[0.606,0.23],[0.618,0.242],[0.622,0.252],[0.636,0.3],[0.64,0.31],[0.648,0.3],[0.66,0.284],[0.686,0.262],[0.7,0.252],[0.714,0.246],[0.726,0.244],[0.738,0.248],[0.746,0.258],[0.75,0.272],[0.746,0.29],[0.756,0.286],[0.782,0.262],[0.8,0.248],[0.808,0.244],[0.82,0.264],[0.832,0.296],[0.846,0.328],[0.852,0.344],[0.854,0.35],[0.852,0.354],[0.85,0.358],[0.844,0.37],[0.84,0.382],[0.832,0.4],[0.826,0.414],[0.818,0.428],[0.812,0.444],[0.802,0.46],[0.784,0.484],[0.764,0.5],[0.744,0.518],[0.722,0.538],[0.686,0.56],[0.664,0.572],[0.646,0.584],[0.628,0.598],[0.608,0.608],[0.584,0.614],[0.56,0.618],[0.51,0.622],[0.502,0.624],[0.448,0.622],[0.436,0.618],[0.424,0.614],[0.414,0.612],[0.398,0.606],[0.388,0.604],[0.37,0.602],[0.362,0.598],[0.356,0.596],[0.348,0.592],[0.338,0.588],[0.328,0.586],[0.32,0.584]],[]]"),-3])
+drawings.push([JSON.parse("[[[0.2,0.498],[0.204,0.484],[0.206,0.446],[0.21,0.422],[0.212,0.404],[0.214,0.39],[0.216,0.38],[0.218,0.372],[0.22,0.362],[0.222,0.342],[0.224,0.332],[0.228,0.32],[0.232,0.31],[0.234,0.304],[0.238,0.298],[0.244,0.294],[0.256,0.29],[0.264,0.288],[0.276,0.284],[0.282,0.282],[0.294,0.28],[0.304,0.282],[0.31,0.288],[0.316,0.296],[0.318,0.304],[0.32,0.31],[0.324,0.32],[0.326,0.332],[0.328,0.34],[0.332,0.346],[0.334,0.36],[0.338,0.37],[0.342,0.38],[0.346,0.386],[0.348,0.394],[0.346,0.414],[0.344,0.434],[0.342,0.442]],[[0.324,0.324],[0.328,0.322],[0.33,0.318],[0.344,0.314],[0.366,0.302],[0.38,0.294],[0.394,0.282],[0.396,0.28],[0.434,0.282],[0.436,0.284],[0.438,0.29],[0.442,0.296],[0.444,0.308],[0.446,0.312],[0.448,0.32],[0.452,0.332],[0.456,0.34],[0.458,0.342],[0.46,0.348],[0.462,0.342],[0.466,0.332],[0.468,0.32],[0.472,0.312],[0.48,0.3],[0.49,0.294],[0.498,0.286],[0.512,0.278],[0.528,0.272],[0.538,0.268],[0.548,0.276],[0.556,0.286],[0.56,0.294],[0.57,0.302],[0.59,0.294],[0.612,0.284],[0.642,0.276],[0.674,0.284],[0.69,0.296],[0.702,0.304],[0.706,0.306],[0.708,0.308],[0.712,0.31],[0.714,0.368],[0.712,0.406],[0.714,0.456],[0.712,0.57],[0.708,0.584],[0.704,0.604],[0.7,0.612],[0.694,0.62],[0.688,0.632],[0.682,0.64],[0.676,0.648],[0.666,0.656],[0.652,0.662],[0.64,0.668],[0.628,0.674],[0.622,0.676],[0.614,0.68],[0.608,0.682],[0.598,0.686],[0.584,0.688],[0.56,0.69],[0.542,0.692],[0.528,0.694],[0.504,0.696],[0.396,0.692],[0.38,0.69],[0.368,0.688],[0.358,0.686],[0.352,0.684],[0.346,0.682],[0.34,0.678],[0.33,0.676],[0.318,0.67],[0.308,0.668],[0.3,0.666],[0.294,0.662],[0.288,0.66],[0.276,0.656],[0.266,0.652],[0.258,0.65],[0.256,0.646],[0.252,0.638],[0.248,0.634],[0.244,0.63],[0.242,0.624],[0.238,0.6],[0.234,0.59],[0.232,0.582],[0.228,0.57],[0.22,0.556],[0.214,0.542],[0.212,0.536],[0.21,0.52],[0.208,0.514],[0.206,0.51],[0.204,0.494],[0.202,0.49],[0.2,0.484]],[]]"),-4])
+drawings.push([JSON.parse("[[[0.268,0.514],[0.266,0.508],[0.264,0.494],[0.262,0.476],[0.258,0.442],[0.25,0.422],[0.242,0.396],[0.238,0.384],[0.234,0.34],[0.232,0.322],[0.224,0.306],[0.222,0.296],[0.22,0.29],[0.218,0.266],[0.214,0.256],[0.212,0.24],[0.21,0.224],[0.206,0.214],[0.204,0.204],[0.202,0.19],[0.2,0.186]],[[0.198,0.176],[0.216,0.184],[0.226,0.188],[0.236,0.194],[0.252,0.2],[0.29,0.216],[0.318,0.22],[0.334,0.226],[0.336,0.228],[0.342,0.232],[0.35,0.242],[0.358,0.25],[0.368,0.258],[0.376,0.266],[0.386,0.276],[0.398,0.29],[0.422,0.308],[0.434,0.318],[0.442,0.324],[0.452,0.332],[0.464,0.342],[0.476,0.35],[0.49,0.356],[0.498,0.358],[0.504,0.362],[0.51,0.366],[0.52,0.37],[0.528,0.374],[0.536,0.378],[0.538,0.38]],[[0.534,0.382],[0.522,0.384],[0.512,0.386],[0.506,0.388],[0.504,0.39],[0.494,0.392],[0.486,0.394],[0.48,0.396],[0.472,0.398],[0.47,0.4]],[[0.474,0.404],[0.482,0.41],[0.49,0.418],[0.5,0.428],[0.51,0.438],[0.52,0.448],[0.532,0.462],[0.546,0.476],[0.556,0.486],[0.562,0.492],[0.564,0.494],[0.566,0.496],[0.57,0.504],[0.574,0.508],[0.576,0.51],[0.578,0.512]],[[0.27,0.504],[0.31,0.5],[0.32,0.496],[0.324,0.494],[0.346,0.49],[0.356,0.488],[0.366,0.486],[0.376,0.484]],[[0.37,0.49],[0.376,0.5],[0.384,0.508],[0.386,0.51],[0.39,0.516],[0.394,0.522],[0.402,0.53],[0.408,0.538],[0.414,0.546],[0.416,0.552],[0.418,0.558],[0.42,0.562],[0.424,0.568],[0.428,0.574],[0.43,0.576],[0.432,0.58],[0.434,0.584],[0.438,0.586],[0.442,0.588],[0.444,0.59],[0.446,0.592],[0.448,0.594],[0.45,0.598],[0.452,0.6]],[[0.576,0.508],[0.57,0.51],[0.554,0.514],[0.546,0.522],[0.54,0.526],[0.532,0.532],[0.524,0.536],[0.516,0.542],[0.508,0.546],[0.498,0.552],[0.49,0.558],[0.484,0.562],[0.48,0.568],[0.478,0.57],[0.476,0.572],[0.474,0.576],[0.47,0.58],[0.468,0.584],[0.466,0.586],[0.464,0.59],[0.462,0.598],[0.46,0.6],[0.456,0.608],[0.454,0.612]],[]]"),-5])
+drawings.push([JSON.parse("[[[0.13,0.192],[0.138,0.208],[0.142,0.22],[0.144,0.23],[0.148,0.248],[0.156,0.26],[0.16,0.272],[0.164,0.286],[0.17,0.306],[0.178,0.324],[0.184,0.346],[0.19,0.368],[0.194,0.386],[0.198,0.406],[0.206,0.436],[0.214,0.476],[0.232,0.544],[0.234,0.576],[0.238,0.632],[0.244,0.672],[0.254,0.718],[0.26,0.768],[0.262,0.804],[0.264,0.856],[0.266,0.872],[0.268,0.88]],[[0.27,0.872],[0.3,0.876],[0.32,0.88],[0.338,0.882],[0.372,0.884],[0.466,0.89],[0.552,0.902],[0.612,0.904],[0.69,0.902],[0.7,0.9],[0.712,0.898],[0.734,0.896],[0.742,0.894],[0.762,0.892]],[[0.766,0.884],[0.77,0.86],[0.784,0.822],[0.802,0.772],[0.818,0.704],[0.828,0.644],[0.84,0.6],[0.846,0.566],[0.85,0.534],[0.852,0.5],[0.854,0.43],[0.856,0.314],[0.86,0.282],[0.862,0.272],[0.864,0.264],[0.866,0.254],[0.868,0.234],[0.87,0.228],[0.872,0.206],[0.874,0.202]],[[0.866,0.198],[0.852,0.202],[0.832,0.204],[0.318,0.206],[0.26,0.208],[0.222,0.21],[0.194,0.214],[0.174,0.216]],[[0.13,0.2],[0.132,0.19],[0.134,0.186],[0.138,0.18],[0.142,0.174],[0.144,0.17],[0.152,0.162],[0.158,0.154],[0.162,0.148],[0.172,0.14],[0.182,0.134],[0.194,0.128],[0.204,0.122],[0.214,0.114],[0.228,0.106],[0.246,0.096],[0.276,0.09],[0.294,0.084],[0.31,0.08],[0.328,0.076],[0.346,0.072],[0.456,0.074],[0.49,0.076],[0.51,0.078],[0.554,0.08],[0.572,0.082],[0.612,0.086],[0.64,0.09],[0.662,0.092],[0.722,0.096],[0.756,0.1],[0.794,0.104],[0.802,0.108],[0.808,0.11],[0.812,0.114],[0.822,0.12],[0.83,0.128],[0.842,0.138],[0.846,0.142],[0.852,0.148],[0.856,0.156],[0.858,0.164],[0.86,0.17],[0.862,0.176],[0.864,0.192],[0.866,0.214]],[[0.362,0.072],[0.366,0.052],[0.37,0.04],[0.376,0.034],[0.386,0.026],[0.4,0.018],[0.414,0.012],[0.424,0.006],[0.434,0.002],[0.458,0],[0.496,0.002],[0.512,0.004],[0.522,0.006],[0.528,0.008],[0.536,0.01],[0.544,0.012],[0.552,0.016],[0.56,0.02],[0.564,0.022],[0.566,0.024],[0.574,0.03],[0.58,0.034],[0.584,0.038],[0.586,0.04],[0.59,0.052],[0.592,0.064],[0.59,0.076],[0.588,0.082],[0.586,0.086]],[[0.278,0.208],[0.282,0.218],[0.284,0.232],[0.292,0.262],[0.296,0.286],[0.304,0.31],[0.306,0.332],[0.308,0.35],[0.31,0.418],[0.314,0.442],[0.32,0.464],[0.324,0.482],[0.328,0.496],[0.332,0.522],[0.334,0.542],[0.338,0.562],[0.342,0.584],[0.346,0.608],[0.354,0.638],[0.362,0.668],[0.368,0.694],[0.372,0.714],[0.376,0.726],[0.378,0.74],[0.38,0.77],[0.378,0.848],[0.376,0.868]],[[0.48,0.882],[0.486,0.872],[0.494,0.858],[0.498,0.846],[0.502,0.832],[0.506,0.812],[0.51,0.786],[0.502,0.548],[0.49,0.482],[0.472,0.418],[0.464,0.382],[0.466,0.262],[0.468,0.254],[0.47,0.248],[0.472,0.238],[0.474,0.228],[0.476,0.22],[0.478,0.214],[0.48,0.21]],[[0.684,0.202],[0.682,0.36],[0.684,0.392],[0.688,0.426],[0.694,0.464],[0.696,0.54],[0.694,0.644],[0.69,0.67],[0.684,0.694],[0.674,0.722],[0.67,0.744],[0.666,0.764],[0.662,0.782],[0.658,0.794],[0.654,0.804],[0.652,0.812],[0.65,0.816],[0.648,0.82],[0.646,0.824],[0.642,0.838],[0.64,0.844],[0.638,0.85],[0.636,0.858],[0.634,0.888]],[]]"),-6])
+drawings.push([JSON.parse("[[[0.054,0.466],[0.074,0.47],[0.286,0.476],[0.456,0.486],[0.556,0.488],[0.708,0.49],[0.752,0.488],[0.756,0.486],[0.766,0.484],[0.79,0.48],[0.814,0.476],[0.83,0.472],[0.836,0.47],[0.858,0.472],[0.878,0.476]],[[0.454,0.078],[0.448,0.114],[0.446,0.154],[0.44,0.204],[0.446,0.61],[0.452,0.658],[0.466,0.742],[0.474,0.784],[0.476,0.808],[0.478,0.82],[0.48,0.824]],[]]"),-7])
+drawings.push([JSON.parse("[[[0.812,0.938],[0.808,0.93],[0.802,0.912],[0.792,0.89],[0.782,0.866],[0.77,0.834],[0.746,0.776],[0.716,0.714],[0.69,0.658],[0.67,0.614],[0.656,0.584],[0.644,0.558],[0.632,0.534],[0.616,0.494],[0.604,0.472],[0.59,0.446],[0.574,0.422],[0.566,0.41],[0.562,0.402],[0.56,0.4],[0.558,0.394],[0.556,0.392],[0.552,0.386],[0.548,0.38],[0.544,0.372],[0.54,0.366],[0.538,0.364],[0.536,0.358],[0.532,0.356],[0.53,0.352]],[[0.314,0.484],[0.322,0.492],[0.332,0.5],[0.342,0.51],[0.36,0.528],[0.378,0.548],[0.394,0.566],[0.414,0.586],[0.438,0.614],[0.46,0.634],[0.476,0.652],[0.498,0.67],[0.514,0.688],[0.532,0.706],[0.546,0.718],[0.558,0.728],[0.574,0.746],[0.584,0.756],[0.598,0.77],[0.612,0.784],[0.624,0.798],[0.642,0.814],[0.656,0.828],[0.67,0.844],[0.678,0.852],[0.684,0.858],[0.688,0.864],[0.694,0.87],[0.704,0.882],[0.714,0.89],[0.718,0.898],[0.722,0.902],[0.73,0.91],[0.738,0.916],[0.742,0.922],[0.75,0.926],[0.756,0.928],[0.758,0.93],[0.76,0.932],[0.764,0.934],[0.772,0.938],[0.776,0.94],[0.778,0.942],[0.782,0.946],[0.79,0.95],[0.798,0.952],[0.8,0.954],[0.804,0.956],[0.808,0.958],[0.812,0.96],[0.814,0.962],[0.818,0.964]],[[0.314,0.48],[0.32,0.484],[0.328,0.486],[0.338,0.488],[0.348,0.49],[0.364,0.488],[0.37,0.486],[0.382,0.482],[0.398,0.476],[0.414,0.468],[0.428,0.46],[0.438,0.448],[0.446,0.442],[0.454,0.432],[0.466,0.422],[0.472,0.41],[0.484,0.398],[0.486,0.392],[0.49,0.386],[0.494,0.38],[0.496,0.376],[0.5,0.37],[0.504,0.366],[0.506,0.362],[0.508,0.358],[0.51,0.352],[0.512,0.35],[0.514,0.348],[0.516,0.346],[0.518,0.344],[0.52,0.342],[0.522,0.338],[0.524,0.332]],[[0.516,0.336],[0.51,0.338],[0.48,0.334],[0.468,0.33],[0.452,0.324],[0.448,0.322],[0.442,0.32],[0.434,0.318],[0.424,0.314],[0.418,0.31],[0.412,0.304],[0.408,0.3],[0.402,0.296],[0.394,0.292],[0.384,0.286],[0.378,0.282],[0.37,0.274],[0.366,0.272],[0.362,0.27],[0.358,0.266],[0.352,0.262],[0.346,0.256],[0.34,0.248],[0.336,0.244],[0.332,0.236],[0.324,0.224],[0.318,0.214],[0.314,0.198],[0.306,0.18],[0.304,0.17],[0.302,0.164],[0.3,0.158],[0.298,0.152],[0.294,0.142],[0.29,0.124],[0.288,0.114],[0.284,0.108],[0.282,0.104],[0.28,0.092]],[[0.31,0.48],[0.304,0.476],[0.3,0.474],[0.296,0.47],[0.292,0.464],[0.286,0.458],[0.282,0.45],[0.276,0.44],[0.272,0.432],[0.27,0.422],[0.262,0.408],[0.256,0.394],[0.252,0.382],[0.25,0.372],[0.248,0.362],[0.244,0.354],[0.242,0.338],[0.24,0.328],[0.238,0.318],[0.236,0.296],[0.232,0.284],[0.23,0.272],[0.228,0.262],[0.232,0.196],[0.234,0.19],[0.238,0.176],[0.242,0.168],[0.244,0.16],[0.248,0.154],[0.252,0.144],[0.254,0.14],[0.258,0.13],[0.26,0.122],[0.262,0.118],[0.266,0.11],[0.268,0.104],[0.27,0.1],[0.272,0.094],[0.274,0.092],[0.276,0.09]],[[0.266,0.196],[0.268,0.204],[0.272,0.218],[0.274,0.228],[0.278,0.234],[0.282,0.244],[0.288,0.252],[0.294,0.258],[0.302,0.266],[0.308,0.272],[0.318,0.28],[0.324,0.286],[0.33,0.29],[0.334,0.292],[0.338,0.296],[0.342,0.298],[0.344,0.3],[0.348,0.304],[0.352,0.308],[0.356,0.31],[0.358,0.312]],[[0.25,0.27],[0.252,0.28],[0.256,0.294],[0.264,0.306],[0.276,0.324],[0.288,0.34],[0.3,0.358],[0.308,0.368],[0.314,0.374],[0.318,0.38],[0.32,0.382]],[[0.308,0.314],[0.316,0.322],[0.322,0.332],[0.332,0.342],[0.346,0.356],[0.356,0.366],[0.362,0.372],[0.368,0.376],[0.372,0.378]],[]]"),-8])
+drawings.push([JSON.parse("[[[0.056,0.03],[0.054,0.052],[0.052,0.074],[0.054,0.12],[0.06,0.142],[0.07,0.162],[0.078,0.172],[0.084,0.18],[0.09,0.186],[0.102,0.198],[0.116,0.212],[0.148,0.224],[0.17,0.222],[0.188,0.216],[0.2,0.21],[0.21,0.206],[0.224,0.196],[0.236,0.182],[0.246,0.166],[0.252,0.152],[0.258,0.14],[0.26,0.124],[0.262,0.084],[0.264,0.07],[0.266,0.066]],[[0.444,0.044],[0.418,0.046],[0.414,0.05],[0.41,0.062],[0.416,0.106],[0.432,0.13],[0.438,0.136],[0.444,0.14],[0.446,0.144],[0.45,0.15],[0.452,0.154],[0.454,0.156],[0.448,0.164],[0.444,0.168],[0.434,0.174],[0.422,0.18],[0.41,0.186],[0.402,0.19],[0.392,0.192],[0.386,0.196],[0.354,0.192]],[[0.688,0.036],[0.686,0.058],[0.684,0.122],[0.686,0.198],[0.688,0.208],[0.69,0.222],[0.692,0.228],[0.712,0.222],[0.72,0.22],[0.736,0.216],[0.76,0.212],[0.788,0.206],[0.808,0.204],[0.836,0.208],[0.856,0.204]],[[0.686,0.114],[0.696,0.108],[0.718,0.104],[0.738,0.102],[0.824,0.098],[0.842,0.096],[0.852,0.094],[0.854,0.092]],[[0.686,0.038],[0.692,0.036],[0.716,0.038],[0.73,0.04],[0.81,0.042],[0.824,0.044],[0.85,0.046],[0.864,0.048]],[[0.17,0.95],[0.172,0.948],[0.18,0.938],[0.188,0.924],[0.194,0.91],[0.204,0.898],[0.208,0.888],[0.216,0.876],[0.224,0.86],[0.234,0.836],[0.252,0.806],[0.262,0.794],[0.268,0.78],[0.276,0.764],[0.284,0.744],[0.296,0.722],[0.304,0.706],[0.316,0.694],[0.322,0.682],[0.326,0.672],[0.328,0.664],[0.33,0.66],[0.332,0.654],[0.338,0.646],[0.34,0.642],[0.344,0.636],[0.346,0.63],[0.348,0.626],[0.35,0.622],[0.352,0.62],[0.354,0.616],[0.356,0.612],[0.358,0.608],[0.362,0.602],[0.364,0.596],[0.366,0.59],[0.372,0.582],[0.376,0.576],[0.382,0.566],[0.384,0.562],[0.386,0.556],[0.388,0.552],[0.392,0.548]],[[0.386,0.552]],[[0.168,0.952],[0.17,0.948],[0.202,0.946],[0.232,0.95],[0.242,0.952],[0.26,0.958],[0.278,0.96],[0.294,0.962],[0.348,0.964],[0.37,0.968],[0.392,0.972],[0.422,0.974],[0.706,0.976],[0.774,0.974],[0.804,0.972],[0.808,0.97],[0.814,0.968]],[[0.808,0.96],[0.804,0.948],[0.792,0.924],[0.78,0.908],[0.772,0.892],[0.768,0.882],[0.76,0.872],[0.746,0.85],[0.726,0.82],[0.708,0.796],[0.702,0.78],[0.698,0.772],[0.692,0.762],[0.68,0.742],[0.664,0.716],[0.658,0.708],[0.654,0.7],[0.65,0.692],[0.646,0.682],[0.638,0.672],[0.634,0.666],[0.632,0.662],[0.628,0.656],[0.622,0.646],[0.614,0.632],[0.608,0.624],[0.604,0.616],[0.602,0.612],[0.6,0.606],[0.598,0.6],[0.596,0.596],[0.594,0.594],[0.592,0.588],[0.59,0.584],[0.588,0.58],[0.586,0.576],[0.584,0.57],[0.582,0.564],[0.58,0.56],[0.578,0.558]],[[0.574,0.552],[0.568,0.532],[0.566,0.482],[0.568,0.456],[0.57,0.444],[0.572,0.432]],[[0.388,0.54],[0.384,0.528],[0.382,0.522],[0.38,0.51],[0.378,0.488]],[[0.376,0.424],[0.374,0.444]],[[0.378,0.426],[0.336,0.428],[0.326,0.43],[0.314,0.432],[0.286,0.43],[0.282,0.428],[0.284,0.416],[0.286,0.394],[0.288,0.386],[0.29,0.366],[0.324,0.368],[0.338,0.37],[0.348,0.372],[0.36,0.374],[0.372,0.378],[0.384,0.38],[0.394,0.382],[0.4,0.384],[0.454,0.386],[0.472,0.388],[0.484,0.39],[0.52,0.392],[0.54,0.394],[0.568,0.4],[0.606,0.402],[0.634,0.4],[0.648,0.398],[0.658,0.396],[0.664,0.394],[0.686,0.392],[0.688,0.398],[0.686,0.414],[0.684,0.42],[0.68,0.426],[0.678,0.428],[0.676,0.43],[0.672,0.432],[0.67,0.434],[0.666,0.436],[0.66,0.438],[0.648,0.44],[0.634,0.438],[0.626,0.436],[0.616,0.434],[0.586,0.432],[0.576,0.43],[0.552,0.426]],[[0.338,0.642],[0.346,0.638],[0.354,0.634],[0.362,0.63],[0.376,0.626],[0.392,0.632],[0.398,0.644],[0.4,0.652],[0.402,0.66],[0.408,0.672],[0.414,0.67],[0.422,0.664],[0.432,0.658],[0.446,0.648],[0.458,0.644],[0.462,0.642],[0.464,0.654],[0.468,0.662],[0.476,0.666],[0.488,0.668],[0.504,0.666],[0.516,0.664],[0.526,0.658],[0.542,0.656],[0.552,0.66],[0.558,0.666],[0.568,0.672],[0.58,0.674],[0.602,0.668],[0.608,0.66],[0.614,0.654],[0.616,0.652],[0.618,0.65],[0.622,0.654],[0.624,0.656],[0.628,0.658]],[[0.364,0.734],[0.358,0.736],[0.356,0.738],[0.354,0.74],[0.352,0.744],[0.354,0.78],[0.356,0.784],[0.36,0.788],[0.368,0.79],[0.378,0.788],[0.384,0.784],[0.394,0.776],[0.4,0.772],[0.404,0.77],[0.402,0.76],[0.4,0.756],[0.392,0.752],[0.382,0.746],[0.38,0.744],[0.37,0.74],[0.362,0.738],[0.358,0.736]],[[0.534,0.826],[0.53,0.828],[0.522,0.83],[0.516,0.836],[0.512,0.842],[0.51,0.846],[0.508,0.85],[0.506,0.858],[0.51,0.866],[0.518,0.868],[0.524,0.872],[0.536,0.878],[0.566,0.874],[0.568,0.866],[0.566,0.862],[0.564,0.858],[0.56,0.854],[0.556,0.844],[0.552,0.838],[0.548,0.834],[0.544,0.832],[0.54,0.83]],[[0.376,0.902],[0.366,0.91],[0.36,0.922],[0.364,0.938],[0.396,0.932],[0.41,0.93],[0.416,0.926],[0.42,0.924],[0.422,0.922],[0.42,0.91],[0.412,0.9],[0.4,0.89],[0.394,0.886],[0.392,0.884]],[[0.462,0.522],[0.456,0.528],[0.45,0.534],[0.448,0.542],[0.444,0.55],[0.44,0.556],[0.442,0.568],[0.462,0.566],[0.466,0.564],[0.468,0.562],[0.466,0.552]],[[0.54,0.594],[0.528,0.596],[0.526,0.6],[0.532,0.62],[0.534,0.622],[0.562,0.618],[0.568,0.616],[0.57,0.612],[0.572,0.61],[0.566,0.598],[0.56,0.594],[0.552,0.592]],[[0.372,0.435],[0.374,0.441],[0.376,0.457],[0.378,0.473],[0.38,0.481],[0.382,0.491],[0.384,0.501],[0.386,0.511],[0.388,0.521],[0.39,0.529],[0.392,0.541]],[]]"),-9])
+
+
+
+//created by Daxturus
+
+
+
+
+function equipSearch(obj)
+{
+		//in goes object. out goes list of objects.
+		var out = []
+		for (var i = 0; i < obj.equipment.length; i++)
+		{
+			out.push(JSON.parse(JSON.stringify(obj.equipment[i])))
+			var addToOut = equipSearch(JSON.parse(JSON.stringify(obj.equipment[i])))
+			for (var j = 0; j < addToOut.length; j++)
+			{
+					out.push(JSON.parse(JSON.stringify(addToOut[j])))
+			}
+		}
+		return out;
+}
+
+function invSearch(obj)
+{
+		//in goes object. out goes list of objects. but this time there is more objects to look for
+		var out = []
+		for (var i = 0; i < obj.inventory.length; i++)
+		{
+			out.push(JSON.parse(JSON.stringify(obj.inventory[i])))
+			var addToOut = invSearch(JSON.parse(JSON.stringify(obj.inventory[i])))
+			for (var j = 0; j < addToOut.length; j++)
+			{
+					out.push(JSON.parse(JSON.stringify(addToOut[j])))
+			}
+		}
+		for (var i = 0; i < obj.equipment.length; i++)
+		{
+			out.push(JSON.parse(JSON.stringify(obj.equipment[i])))
+			var addToOut = invSearch(JSON.parse(JSON.stringify(obj.equipment[i])))
+			for (var j = 0; j < addToOut.length; j++)
+			{
+					out.push(JSON.parse(JSON.stringify(addToOut[j])))
+			}
+		}
+		return out;
+}
+
+
+//object structure:
+//x (An object's X position.)
+//y (An object's Y position.)
+//name (The name of an object.)
+//UUID (The UUID of this object.)
+//drawingUUID (An object's texture based on the UUID of a drawing.)
+//stats (A list of strings or numbers representing an object's stats.)
+//inventory (A list of objects this object has in its inventory. Stats here are summed up and displayed, but not added to the parent object. (For equipped items, basically do an array.flat on every object contained within the inventory and sum those up))
+//equipment (A list of objects this object has equipped. Stats of objects in here, as well as the stats of the objects this object has EQUIPPED (not in its inventory) are summed up and added to the object. Yes, recursion.)
+//inInventoryOfUUID (What object UUID this object is contained in.)
+//equippedToUUID (What object UUID this object is equipped to.)
+
+
+//terrain structure:
+//x (A terrain's X position.)
+//y (A terrain's Y position.)
+//drawingUUID (An object's texture based on the UUID of a drawing.)
+
+
+//how to implement clicking and dragging:
+//there are 2 different things people will do to click and drag:
+//1. hold left click and drag. if someone left clicks on an object, and moves their cursor off of the clicked tile, the object should move with the cursor
+//2. left click once and left click again to drop. if someone left clicks on an object and does not move their cursor, the cursor will begin dragging the object until they press left click again.
+//if SHIFT is held while left clicking, the object will be SELECTED instead of being DRAGGED
+document.body.onmousedown = function() { 
+	mouseDown = true
+	var holdingX = false
+	for (var i = 0; i < keysBeingPressed.length; i++)
+	{
+		if (keysBeingPressed[i].toLowerCase() == "x" || keysBeingPressed[i].toLowerCase() == "p")
+		{
+			holdingX = true
+		}
+	}
+	if (holdingX == false)
+	{
+		if (draggingObjectUUID != null)
+		{
+			if (clickPosY != cameraY + Math.floor(cursorY / zoomsize) || clickPosX != cameraX + Math.floor(cursorX / zoomsize))
+			{
+				if (cursorX < 400 && cursorX >= 0 && cursorY < 400 && cursorY > 50)
+				{
+					for (var i = 0; i < objects.length; i++)
+					{
+						if (draggingObjectUUID == objects[i].UUID)
+						{
+								prevActions.push([3,draggingObjectUUID,objects[i].x,objects[i].y])
+								objects[i].x = cameraX + Math.floor(cursorX / zoomsize)
+								objects[i].y = cameraY + Math.floor(cursorY / zoomsize)
+						}
+					}
+					draggingObjectUUID = null
+				}
+			}
+		}
+		else
+		{
+			var shiftPressed = false
+			for (var i = 0; i < keysBeingPressed.length; i++)
+			{
+				if (keysBeingPressed[0].toLowerCase() == "shift")
+				{
+					shiftPressed = true
+				}
+			}
+			if (!shiftPressed)
+			{
+				if (draggingObjectUUID == null)
+				{
+					if (cursorX < 400 && cursorX >= 0 && cursorY < 400 && cursorY > 50)
+					{
+						clickPosX = cameraX + Math.floor(cursorX / zoomsize)
+						clickPosY = cameraY + Math.floor(cursorY / zoomsize)
+						for (var i = 0; i < objects.length; i++)
+						{
+							 if (objects[i].x == clickPosX && objects[i].y == clickPosY)
+							 {
+								draggingObjectUUID = objects[i].UUID;
+								prevActions.push([2,draggingObjectUUID,objects[i].x,objects[i].y])
+							 }
+						}
+					}
+				}
+			}
+			if (shiftPressed)
+			{
+				if (cursorX < 400 && cursorX >= 0 && cursorY < 400 && cursorY > 50)
+				{
+					clickPosX = cameraX + Math.floor(cursorX / zoomsize)
+					clickPosY = cameraY + Math.floor(cursorY / zoomsize)
+					for (var i = 0; i < objects.length; i++)
+					{
+						 if (objects[i].x == clickPosX && objects[i].y == clickPosY)
+						 {
+							 if (objects[i].UUID != selectedObjectUUID)
+							 {
+								prevActions.push([4,selectedObjectUUID])
+								selectedObjectUUID = objects[i].UUID
+							 }
+						 }
+					}
+				}
+			}
+		}
+	}
+}
+document.body.onmouseup = function() {
+	mouseDown = false
+	if (draggingObjectUUID != null)
+	{
+		if (clickPosY != cameraY + Math.floor(cursorY / zoomsize) || clickPosX != cameraX + Math.floor(cursorX / zoomsize))
+		{
+			if (cursorX < 400 && cursorX >= 0 && cursorY < 400 && cursorY > 50)
+			{
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (draggingObjectUUID == objects[i].UUID)
+					{
+							prevActions.push([3,draggingObjectUUID,objects[i].x,objects[i].y])
+							objects[i].x = cameraX + Math.floor(cursorX / zoomsize)
+							objects[i].y = cameraY + Math.floor(cursorY / zoomsize)
+					}
+				}
+				draggingObjectUUID = null
+			}
+		}
+	}
+	else
+	{
+		var holdingX = false
+		for (var i = 0; i < keysBeingPressed.length; i++)
+		{
+			if (keysBeingPressed[i].toLowerCase() == "x")
+			{
+				holdingX = true
+			}
+		}
+		if (holdingX == true)
+		{
+			for (var i = 0; i < objects.length; i++)
+			{
+				clickPosX = cameraX + Math.floor(cursorX / zoomsize)
+				clickPosY = cameraY + Math.floor(cursorY / zoomsize)
+				if (objects[i].x == clickPosX && objects[i].y == clickPosY)
+				{
+					prevActions.push([5,JSON.stringify(objects[i],i)])
+					objects.splice(i,1)
+				}
+			}
+			for (var i = 0; i < terrain.length; i++)
+			{
+				clickPosX = cameraX + Math.floor(cursorX / zoomsize)
+				clickPosY = cameraY + Math.floor(cursorY / zoomsize)
+				if (terrain[i].x == clickPosX && terrain[i].y == clickPosY)
+				{
+					prevActions.push([6,JSON.stringify(terrain[i]),i])
+					terrain.splice(i,1)
+				}
+			}
+		}
+	}
+	clickPosX = null
+	clickPosY = null
+}
+
+
+document.onmousemove = function (e) {
+	rect = screen.getBoundingClientRect()
+	cursorX = e.clientX - rect.left;
+	cursorY = e.clientY - rect.top;
+}
+
+document.onkeypress = function(e)
+{
+	if (e.key == "Z" || e.key == "z")
+	{
+		if (prevActions.length > 0)
+		{
+			var prevActionID = prevActions[prevActions.length - 1][0]
+			if (prevActionID == 0)
+			{
+				var index = -999 //will error but not crash if something goes wrong.
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						index = i
+					}
+				}
+				prevActions.pop()
+				objects.splice(index, 1);
+			}
+			if (prevActionID == 1)
+			{
+				terrain.pop()
+				prevActions.pop()
+			}
+			if (prevActionID == 2)
+			{
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (prevActions[prevActions.length - 1][1] == objects[i].UUID)
+					{
+						objects[i].x = prevActions[prevActions.length - 1][2]
+						objects[i].y = prevActions[prevActions.length - 1][3]
+						draggingObjectUUID = null
+					}
+				}
+				prevActions.pop()
+			}
+			if (prevActionID == 3)
+			{
+				draggingObjectUUID = prevActions[prevActions.length - 1][1]
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (prevActions[prevActions.length - 1][1] == objects[i].UUID)
+					{
+						objects[i].x = prevActions[prevActions.length - 1][2]
+						objects[i].y = prevActions[prevActions.length - 1][3]
+					}
+				}
+				prevActions.pop()
+			}
+			if (prevActionID == 4)
+			{
+				selectedObjectUUID = prevActions[prevActions.length - 1][1]
+				prevActions.pop()
+			}
+			if (prevActionID == 5)
+			{
+				objects.splice(prevActions[prevActions.length - 1][2],0,JSON.parse(prevActions[prevActions.length - 1][1]))
+				prevActions.pop()
+			}
+			if (prevActionID == 6)
+			{
+				terrain.splice(prevActions[prevActions.length - 1][2],0,JSON.parse(prevActions[prevActions.length - 1][1]))
+				prevActions.pop()
+			}
+			if (prevActionID == 7) //object ADDED TO INVENTORY
+			{
+				objects.push(JSON.parse(JSON.stringify(prevActions[prevActions.length - 1][1])))
+				draggingObjectUUID = prevActions[prevActions.length - 1][2]
+				var selIND = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+						if (objects[i].UUID == prevActions[prevActions.length - 1][3])
+						{
+							selIND = i
+						}
+				}
+				objects[selIND].inventory.pop()
+				prevActions.pop()
+			}
+			if (prevActionID == 8) //object REMOVED FROM INVENTORY
+			{
+				draggingObjectUUID = null
+				var draggedObjectInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][2])
+					{
+						draggedObjectInd = i
+					}
+				}
+				var selectedObjectInd2 = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						selectedObjectInd2 = i
+					}
+				}
+				var k = JSON.stringify(objects[draggedObjectInd])
+				objects[selectedObjectInd2].inventory.push(JSON.parse(k))
+				objects.splice(draggedObjectInd,1)
+				prevActions.pop()
+			}
+			if (prevActionID == 9) //object ADDED TO EQUIPMENT
+			{
+				objects.push(JSON.parse(JSON.stringify(prevActions[prevActions.length - 1][1])))
+				draggingObjectUUID = prevActions[prevActions.length - 1][2]
+				var selIND = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+						if (objects[i].UUID == prevActions[prevActions.length - 1][3])
+						{
+							selIND = i
+						}
+				}
+				objects[selIND].equipment.pop()
+				prevActions.pop()
+			}
+			if (prevActionID == 10) //object REMOVED FROM EQUIPMENT
+			{
+				draggingObjectUUID = null
+				var draggedObjectInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][2])
+					{
+						draggedObjectInd = i
+					}
+				}
+				var selectedObjectInd2 = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						selectedObjectInd2 = i
+					}
+				}
+				var k = JSON.stringify(objects[draggedObjectInd])
+				objects[selectedObjectInd2].equipment.push(JSON.parse(k))
+				objects.splice(draggedObjectInd,1)
+				prevActions.pop()
+			}
+			if (prevActionID == 11) //object name changed
+			{
+				var objSelInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						objSelInd = i
+					}
+				}
+				objects[objSelInd].name = prevActions[prevActions.length - 1][2]
+				prevActions.pop()
+			}
+			if (prevActionID == 12) //object drawingUUID changed
+			{
+				var objSelInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						objSelInd = i
+					}
+				}
+				objects[objSelInd].drawingUUID = prevActions[prevActions.length - 1][2]
+				prevActions.pop()
+			}
+			if (prevActionID == 13) //stat added
+			{
+				var objSelInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						objSelInd = i
+					}
+				}
+				objects[objSelInd].stats.pop()
+				prevActions.pop()
+			}
+			if (prevActionID == 14) //stat name changed
+			{
+				var objSelInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						objSelInd = i
+					}
+				}
+				objects[objSelInd].stats[prevActions[prevActions.length - 1][2]][0] = prevActions[prevActions.length - 1][3]
+				prevActions.pop()
+			}
+			if (prevActionID == 15) //stat value changed
+			{
+				var objSelInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						objSelInd = i
+					}
+				}
+				objects[objSelInd].stats[prevActions[prevActions.length - 1][2]][1] = prevActions[prevActions.length - 1][3]
+				prevActions.pop()
+			}
+			if (prevActionID == 16) //stat deleted
+			{
+				var objSelInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][1])
+					{
+						objSelInd = i
+					}
+				}
+				objects[objSelInd].stats.push(prevActions[prevActions.length - 1][2])
+				prevActions.pop()
+			}
+			if (prevActionID == 17) //item consumed
+			{
+				var objSelInd = -1
+				for (var i = 0; i < objects.length; i++)
+				{
+					if (objects[i].UUID == prevActions[prevActions.length - 1][2])
+					{
+						objSelInd = i
+					}
+				}
+				var delList = prevActions[prevActions.length - 1][3]
+				console.log(delList)
+				var revertList = prevActions[prevActions.length - 1][4]
+				console.log(revertList)
+				for (var i = 0; i < revertList.length; i++)
+				{
+					for (var j = 0; j < objects[objSelInd].stats.length; j++)
+					{
+						if (objects[objSelInd].stats[j][0].toLowerCase() == revertList[i][0].toLowerCase())
+						{
+							objects[objSelInd].stats[j][1] =  revertList[i][1]
+						}
+					}
+				}
+				var spliceMe = []
+				for (var i = 0; i < delList.length; i++)
+				{
+					for (var j = 0; j < objects[objSelInd].stats.length; j++)
+					{
+						if (objects[objSelInd].stats[j][0].toLowerCase() == delList[i].toLowerCase())
+						{
+							spliceMe.push(objects[objSelInd].stats[j][0].toLowerCase())
+						}
+					}
+				}
+				for (var i = 0; i < spliceMe.length; i++)
+				{
+					for (var j = 0; j < objects[objSelInd].stats.length; j++)
+					{
+						if (objects[objSelInd].stats[j][0].toLowerCase() == spliceMe[i])
+						{
+							objects[objSelInd].stats.splice(j,1)
+						}
+					}
+				}
+				draggingObjectUUID = prevActions[prevActions.length - 1][1]
+				prevActions.pop()
+			}
+			if (prevActionID == 18) //object deleted from button
+			{
+				objects.push(prevActions[prevActions.length - 1][1])
+				draggingObjectUUID = prevActions[prevActions.length - 1][1].UUID
+				prevActions.pop()
+			}
+			
+		}
+	}
+	if (e.key == "W" ||  e.key == "w")
+	{
+		cameraY = cameraY - 1
+	}
+	if (e.key == "A" ||  e.key == "a")
+	{
+		cameraX = cameraX - 1
+	}
+	if (e.key == "S" ||  e.key == "s")
+	{
+		cameraY = cameraY + 1
+	}
+	if (e.key == "D" ||  e.key == "d")
+	{
+		cameraX = cameraX + 1
+	}
+
+	if (e.key == "J" || e.key == "j")
+	{
+		DrawingUUIDCounter++;
+		var thing = JSON.parse(window.prompt("Insert JSON here:"))
+		var out = [thing,DrawingUUIDCounter]
+		drawings.push(out)
+		alert("Drawing added with ID "+ DrawingUUIDCounter +": "+out)
+	}
+	if (e.key == "L" || e.key == "l")
+	{
+		paintingUUID = window.prompt("Enter the drawing UUID to paint with",paintingUUID)
+	}
+}
+document.addEventListener("keydown", e => {
+	var found = false
+	if (e.key.toLowerCase() != "j" && e.key.toLowerCase() != "l")
+	{
+		for (var i = 0; i < keysBeingPressed.length; i++)
+		{
+			if (keysBeingPressed[i].toLowerCase() == (e.key).toLowerCase())
+			{
+					found = true
+			}
+		}
+		if (!found)
+		{
+			keysBeingPressed.push(e.key)
+		}
+	}
+})
+document.addEventListener("keyup", e => {
+	for (var i = 0; i < keysBeingPressed.length; i++)
+	{
+		if (keysBeingPressed[i].toLowerCase() == (e.key).toLowerCase())
+		{
+				keysBeingPressed.splice(i,1)
+		}
+	}
+})
+
+
+
+
+
+
+//yes i stole this 60fps code, havent used JS for a while now
+//credit to MarkE and Klaider
+var stop = false;
+var frameCount = 0;
+var fps, fpsInterval, startTime, now, then, elapsed;
+
+
+function startAnimating(fps) {
+    fpsInterval = 1000 / fps;
+    then = Date.now();
+    startTime = then;
+    animate();
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    now = Date.now();
+    elapsed = now - then;
+    if (elapsed > fpsInterval) {
+        then = now - (elapsed % fpsInterval);
+		
+		
+		
+		canvas.fillStyle = "#ffffff"
+		canvas.fillRect(0,0,screen.width,screen.height)
+		
+		
+		
+		
+		
+		//now here we go
+		canvas.fillStyle = "#000000"
+		canvas.strokeStyle = "#000000"
+		
+		
+		
+		
+		for (var i = 0; i < keysBeingPressed.length; i++)
+		{
+			currKey = keysBeingPressed[i]
+			//onscreen only things
+			if (cursorX < 400 && cursorX >= 0 && cursorY < 400 && cursorY > 50)
+			{
+				if (currKey == "N" ||  currKey == "n")
+				{
+					var X = cameraX + Math.floor(cursorX / zoomsize)
+					var Y = cameraY + Math.floor(cursorY / zoomsize)
+					if (X != prevPlacedPosX || Y != prevPlacedPosY)
+					{
+						prevPlacedPosX = X
+						prevPlacedPosY = Y
+						ObjectUUIDCounter++;
+						var out = {
+							x: X,
+							y: Y,
+							name: "Object"+ObjectUUIDCounter,
+							UUID: ObjectUUIDCounter,
+							drawingUUID: -1,
+							stats: [],
+							inventory: [],
+							equipment: []
+						}
+						objects.push(out)
+						prevActions.push([0,ObjectUUIDCounter])
+					}
+				}
+				if (currKey == "P" ||  currKey == "p")
+				{
+					var X = cameraX + Math.floor(cursorX / zoomsize)
+					var Y = cameraY + Math.floor(cursorY / zoomsize)
+					for (var i = 0; i < objects.length; i++)
+					{
+						if (objects[i].x == X && objects[i].y == Y)
+						{
+							objects[i].drawingUUID = paintingUUID
+						}
+					}
+					for (var i = 0; i < terrain.length; i++)
+					{
+						if (terrain[i].x == X && terrain[i].y == Y)
+						{
+							terrain[i].drawingUUID = paintingUUID
+						}
+					}
+				}
+				if (currKey == "T" ||  currKey == "t")
+				{
+					var X = cameraX + Math.floor(cursorX / zoomsize)
+					var Y = cameraY + Math.floor(cursorY / zoomsize)
+					if (X != prevPlacedPosX || Y != prevPlacedPosY)
+					{
+						prevPlacedPosX = X
+						prevPlacedPosY = Y
+						var out = {
+							x: X,
+							y: Y,
+							drawingUUID: -2,
+						}
+						terrain.push(out)
+						prevActions.push([1])
+					}
+				}
+			}
+		}
+		while (prevActions.length > maxActions)
+		{
+				prevActions.shift()
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		for (var j = 0; j < terrain.length; j++)
+		{
+			//don't render me if I'm offscreen!
+			if (terrain[j].x > cameraX && terrain[j].y * zoomsize - cameraY * zoomsize >= 50 && terrain[j].x < Math.ceil(cameraX + 400 / zoomsize) && terrain[j].y < Math.ceil(cameraY + 400 / zoomsize))
+			{
+				//find drawing index
+				var drawingIndex = 0
+				for (var i = 0; i < drawings.length; i++)
+				{
+						if (drawings[i][1] == terrain[j].drawingUUID)
+						{
+								drawingIndex = i
+						}
+				}
+				//lines
+				for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+				{
+					//points
+					if (drawings[drawingIndex][0][i][0])
+					{
+						var startInd = 0
+						canvas.beginPath()
+						canvas.moveTo((terrain[j].x + drawings[drawingIndex][0][i][startInd][0])  * zoomsize  - cameraX * zoomsize,(terrain[j].y + drawings[drawingIndex][0][i][startInd][1]) * zoomsize  - cameraY * zoomsize)
+						for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+						{
+							if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+							{
+								canvas.lineTo((terrain[j].x + drawings[drawingIndex][0][i][k][0]) * zoomsize - cameraX * zoomsize, (terrain[j].y + drawings[drawingIndex][0][i][k][1]) * zoomsize  - cameraY * zoomsize)
+							}
+						}
+						canvas.stroke()
+					}
+				}
+			}
+		}
+		//objects
+		for (var j = 0; j < objects.length; j++)
+		{
+			if (objects[j].UUID != draggingObjectUUID)
+			{
+				//don't render me if I'm offscreen!!!
+				if (objects[j].x > cameraX && objects[j].y * zoomsize - cameraY * zoomsize >= 50 && objects[j].x < Math.ceil(cameraX + 400 / zoomsize) && objects[j].y < Math.ceil(cameraY + 400 / zoomsize))
+				{
+					//find drawing index
+					var drawingIndex = 0
+					for (var i = 0; i < drawings.length; i++)
+					{
+							if (drawings[i][1] == objects[j].drawingUUID)
+							{
+									drawingIndex = i
+							}
+					}
+					//lines
+					for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+					{
+						//points
+						if (drawings[drawingIndex][0][i][0])
+						{
+							var startInd = 0
+							canvas.beginPath()
+							canvas.moveTo((objects[j].x + drawings[drawingIndex][0][i][startInd][0])  * zoomsize  - cameraX * zoomsize,(objects[j].y +drawings[drawingIndex][0][i][startInd][1]) * zoomsize  - cameraY * zoomsize)
+							for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+							{
+								if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+								{
+									canvas.lineTo((objects[j].x + drawings[drawingIndex][0][i][k][0]) * zoomsize - cameraX * zoomsize, (objects[j].y + drawings[drawingIndex][0][i][k][1]) * zoomsize  - cameraY * zoomsize)
+								}
+							}
+							canvas.stroke()
+						}
+					}
+				}
+			}
+		}
+		canvas.fillStyle="#ffffff"
+		canvas.fillRect(400,0,200,400)
+		canvas.fillStyle="#000000"
+		canvas.strokeStyle="#000000"
+		canvas.beginPath()
+		canvas.rect(401,1,198,398)
+		canvas.stroke()
+		canvas.beginPath()
+		canvas.rect(0,0,100,50)
+		canvas.stroke()
+		canvas.beginPath()
+		canvas.rect(350,0,50,50)
+		canvas.stroke()
+		canvas.beginPath()
+		canvas.rect(100,0,300,50)
+		canvas.stroke()
+		//held object
+		if (draggingObjectUUID != null)
+		{
+			var objInd = -1
+			//find object index
+			for (var i = 0; i < objects.length; i++)
+			{
+				if (objects[i].UUID == draggingObjectUUID)
+				{
+					objInd = i
+				}
+			}
+			//find drawing index
+			var drawingIndex = 0
+			for (var i = 0; i < drawings.length; i++)
+			{
+					if (drawings[i][1] == objects[objInd].drawingUUID)
+					{
+							drawingIndex = i
+					}
+			}
+			//lines
+			for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+			{
+				//points
+				if (drawings[drawingIndex][0][i][0])
+				{
+					var startInd = 0
+					canvas.beginPath()
+					canvas.moveTo(cursorX + drawings[drawingIndex][0][i][startInd][0]  * zoomsize  - zoomsize/2,cursorY +drawings[drawingIndex][0][i][startInd][1] * zoomsize - zoomsize/2)
+					for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+					{
+						if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+						{
+							canvas.lineTo(cursorX + drawings[drawingIndex][0][i][k][0] * zoomsize  - zoomsize/2, cursorY + drawings[drawingIndex][0][i][k][1] * zoomsize - zoomsize/2)
+						}
+					}
+					canvas.stroke()
+				}
+			}
+		}
+		//cursor
+		if (draggingObjectUUID != null)
+		{
+			var drawingIndex = 0
+			for (var i = 0; i < drawings.length; i++)
+			{
+					if (drawings[i][1] == -4)
+					{
+							drawingIndex = i
+					}
+			}
+			for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+			{
+				//points
+				if (drawings[drawingIndex][0][i][0])
+				{
+					var startInd = 0
+					canvas.beginPath()
+					canvas.moveTo(cursorX + drawings[drawingIndex][0][i][startInd][0]  * zoomsize  - zoomsize/2,cursorY +drawings[drawingIndex][0][i][startInd][1] * zoomsize - zoomsize/2)
+					for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+					{
+						if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+						{
+							canvas.lineTo(cursorX + drawings[drawingIndex][0][i][k][0] * zoomsize  - zoomsize/2, cursorY + drawings[drawingIndex][0][i][k][1] * zoomsize - zoomsize/2)
+						}
+					}
+					canvas.stroke()
+				}
+			}
+		}
+		if (draggingObjectUUID == null)
+		{
+			var drawingIndex = 0
+			var shiftPressed = false
+			var Xpressed = false
+			var Ppressed = false
+			for (var i = 0; i < keysBeingPressed.length; i++)
+			{
+				if (keysBeingPressed[0].toLowerCase() == "shift")
+				{
+					shiftPressed = true
+				}
+				if (keysBeingPressed[0].toLowerCase() == "x")
+				{
+					Xpressed = true
+				}
+				if (keysBeingPressed[0].toLowerCase() == "p")
+				{
+					Ppressed = true
+				}
+			}
+			if (Xpressed == true)
+			{
+				for (var i = 0; i < drawings.length; i++)
+				{
+						if (drawings[i][1] == -6)
+						{
+								drawingIndex = i
+						}
+				}
+				for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+				{
+					//points
+					if (drawings[drawingIndex][0][i][0])
+					{
+						var startInd = 0
+						canvas.beginPath()
+						canvas.moveTo(cursorX + drawings[drawingIndex][0][i][startInd][0]  * zoomsize  - zoomsize/2,cursorY +drawings[drawingIndex][0][i][startInd][1] * zoomsize - zoomsize/2)
+						for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+						{
+							canvas.lineTo(cursorX + drawings[drawingIndex][0][i][k][0] * zoomsize  - zoomsize/2, cursorY + drawings[drawingIndex][0][i][k][1] * zoomsize - zoomsize/2)
+						}
+						canvas.stroke()
+					}
+				}
+			}
+			else
+			{
+				if (Ppressed == false)
+				{
+					if (!shiftPressed)
+					{
+						for (var i = 0; i < drawings.length; i++)
+						{
+								if (drawings[i][1] == -3)
+								{
+										drawingIndex = i
+								}
+						}
+						for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+						{
+							//points
+							if (drawings[drawingIndex][0][i][0])
+							{
+								var startInd = 0
+								canvas.beginPath()
+								canvas.moveTo(cursorX + drawings[drawingIndex][0][i][startInd][0]  * zoomsize  - zoomsize/2,cursorY +drawings[drawingIndex][0][i][startInd][1] * zoomsize - zoomsize/2)
+								for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+								{
+									canvas.lineTo(cursorX + drawings[drawingIndex][0][i][k][0] * zoomsize  - zoomsize/2, cursorY + drawings[drawingIndex][0][i][k][1] * zoomsize - zoomsize/2)
+								}
+								canvas.stroke()
+							}
+						}
+					}
+					if (shiftPressed)
+					{
+						for (var i = 0; i < drawings.length; i++)
+						{
+								if (drawings[i][1] == -5)
+								{
+										drawingIndex = i
+								}
+						}
+						for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+						{
+							//points
+							if (drawings[drawingIndex][0][i][0])
+							{
+								var startInd = 0
+								canvas.beginPath()
+								canvas.moveTo(cursorX + drawings[drawingIndex][0][i][startInd][0]  * zoomsize  - zoomsize/2,cursorY +drawings[drawingIndex][0][i][startInd][1] * zoomsize - zoomsize/2)
+								for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+								{
+									canvas.lineTo(cursorX + drawings[drawingIndex][0][i][k][0] * zoomsize  - zoomsize/2, cursorY + drawings[drawingIndex][0][i][k][1] * zoomsize - zoomsize/2)
+								}
+								canvas.stroke()
+							}
+						}
+					}
+				}
+				if (Ppressed == true)
+				{
+					for (var i = 0; i < drawings.length; i++)
+					{
+							if (drawings[i][1] == -8)
+							{
+									drawingIndex = i
+							}
+					}
+					for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+					{
+						//points
+						if (drawings[drawingIndex][0][i][0])
+						{
+							var startInd = 0
+							canvas.beginPath()
+							canvas.moveTo(cursorX + drawings[drawingIndex][0][i][startInd][0]  * zoomsize  - zoomsize/2,cursorY +drawings[drawingIndex][0][i][startInd][1] * zoomsize - zoomsize/2)
+							for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+							{
+								canvas.lineTo(cursorX + drawings[drawingIndex][0][i][k][0] * zoomsize  - zoomsize/2, cursorY + drawings[drawingIndex][0][i][k][1] * zoomsize - zoomsize/2)
+							}
+							canvas.stroke()
+						}
+					}
+				}
+			}
+		}
+		drawingIndex = 0
+		for (var i = 0; i < drawings.length; i++)
+		{
+				if (drawings[i][1] == -6)
+				{
+						drawingIndex = i
+				}
+		}
+		for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+		{
+			//points
+			if (drawings[drawingIndex][0][i][0])
+			{
+				var startInd = 0
+				canvas.beginPath()
+				canvas.moveTo(350 + drawings[drawingIndex][0][i][startInd][0]  * 50 ,drawings[drawingIndex][0][i][startInd][1] * 50)
+				for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+				{
+					if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+					{
+						canvas.lineTo(350 + drawings[drawingIndex][0][i][k][0] * 50, drawings[drawingIndex][0][i][k][1] * 50)
+					}
+				}
+				canvas.stroke()
+			}
+		}
+		if (cursorX >= 350 && cursorX <= 400 && cursorY >= 0 && cursorY <= 50)
+		{
+			if (draggingObjectUUID != null)
+			{
+				if (mouseDown)
+				{
+					var draggedObjectInd = -1
+					for (var j = 0; j < objects.length; j++)
+					{
+						if (objects[j].UUID == draggingObjectUUID)
+						{
+							draggedObjectInd = j
+						}
+					}
+					if (draggedObjectInd != -1)
+					{
+						prevActions.push([18,JSON.parse(JSON.stringify(objects[draggedObjectInd]))])
+						objects.splice(draggedObjectInd,1)
+						draggingObjectUUID = null
+					}
+				}
+			}
+		}
+		canvas.fillStyle = "#000000"
+		if (cursorX >= 400 && cursorX <= 600)
+		{
+			scrollY = scrollY - mouseWheelDeltaYFrame / 10
+			if (scrollY > 0)
+			{
+				scrollY = 0
+			}
+		}
+		mouseWheelDeltaYFrame = 0
+		if (selectedObjectUUID == null)
+		{
+			canvas.fillText("No object currently selected.",405,10+scrollY)
+		}
+		if (selectedObjectUUID <= -1)
+		{
+			if (objects.length <= 0)
+			{
+				canvas.fillText("Press N to create an object",405,10+scrollY)
+			}
+			else
+			{
+				canvas.fillText("Shift-Click an object to select it",405,10+scrollY)
+			}
+		}
+		else
+		{
+			var selectedObjectInd = -1
+			for (var i = 0; i < objects.length; i++)
+			{
+				if (objects[i].UUID == selectedObjectUUID)
+				{
+					selectedObjectInd = i
+				}
+			}
+			if (selectedObjectInd >= 0)
+			{
+				var drawingIndex = 0
+				for (var i = 0; i < drawings.length; i++)
+				{
+						if (drawings[i][1] == objects[selectedObjectInd].drawingUUID)
+						{
+								drawingIndex = i
+						}
+				}
+				for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+				{
+					//points
+					if (drawings[drawingIndex][0][i][0])
+					{
+						var startInd = 0
+						canvas.beginPath()
+						canvas.moveTo(405 + drawings[drawingIndex][0][i][startInd][0]  * 40 ,5+drawings[drawingIndex][0][i][startInd][1] * 40+scrollY)
+						for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+						{
+							if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+							{
+								canvas.lineTo(405 + drawings[drawingIndex][0][i][k][0] * 40, 5 + drawings[drawingIndex][0][i][k][1] * 40+scrollY)
+							}
+						}
+						canvas.stroke()
+					}
+				}
+				canvas.beginPath()
+				canvas.rect(447,5+scrollY,120,40)
+				canvas.stroke()
+				canvas.fillText(objects[selectedObjectInd].name,449,29+scrollY)
+				if (draggingObjectUUID != null)
+				{
+					if (draggingObjectUUID != selectedObjectUUID)
+					{
+						var dragObjectInd9001 = -1
+						for (var i = 0; i < objects.length; i++)
+						{
+							if (objects[i].UUID == draggingObjectUUID)
+							{
+								dragObjectInd9001 = i
+							}
+						}
+						if (dragObjectInd9001 != -1)
+						{
+							canvas.beginPath()
+							canvas.rect(571,5+scrollY,24,40)
+							canvas.stroke()
+							drawingIndex = 0
+							for (var i = 0; i < drawings.length; i++)
+							{
+									if (drawings[i][1] == -9)
+									{
+											drawingIndex = i
+									}
+							}
+							for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+							{
+								//points
+								if (drawings[drawingIndex][0][i][0])
+								{
+									var startInd = 0
+									canvas.beginPath()
+									canvas.moveTo(571 + drawings[drawingIndex][0][i][startInd][0]  * 24 ,5+drawings[drawingIndex][0][i][startInd][1] * 40+scrollY)
+									for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+									{
+										if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+										{
+											canvas.lineTo(571 + drawings[drawingIndex][0][i][k][0] * 24, 5 + drawings[drawingIndex][0][i][k][1] * 40+scrollY)
+										}
+									}
+									canvas.stroke()
+								}
+							}
+						}
+						if (mouseDown)
+						{
+							if (cursorX >= 571 && cursorX <= 571+24 && cursorY >= 5+scrollY && cursorY <= 45+scrollY)
+							{
+								//iterate between every existing stat on selected obj
+								//iterate between every existing stat on dragged obj and check if it exists on the parent object
+								//if it exists, add it to the stat. if it does not exist, add a stat for it.
+								//finally, destroy the dragged object.
+								var newStatNames = []
+								var OldStatPreserved = []
+								for (var s = 0; s < objects[dragObjectInd9001].stats.length; s++)
+								{
+									var OldStatInd = -1
+									for (var j = 0; j < objects[selectedObjectInd].stats.length; j++)
+									{
+										if (objects[selectedObjectInd].stats[j][0].toLowerCase() == objects[dragObjectInd9001].stats[s][0].toLowerCase())
+										{
+											OldStatInd = j
+										}
+									}
+									if (OldStatInd == -1)
+									{
+										newStatNames.push(objects[dragObjectInd9001].stats[s][0])
+										objects[selectedObjectInd].stats.push([objects[dragObjectInd9001].stats[s][0],objects[dragObjectInd9001].stats[s][1]])
+									}
+									else
+									{
+										OldStatPreserved.push([objects[selectedObjectInd].stats[OldStatInd][0],objects[selectedObjectInd].stats[OldStatInd][1]])
+										if (isNaN(objects[selectedObjectInd].stats[OldStatInd][1]) || isNaN(objects[dragObjectInd9001].stats[s][1]))
+										{
+											objects[selectedObjectInd].stats[OldStatInd][1] = objects[selectedObjectInd].stats[OldStatInd][1] + ", " + objects[dragObjectInd9001].stats[s][1]
+										}
+										else
+										{
+											objects[selectedObjectInd].stats[OldStatInd][1] = Number(objects[dragObjectInd9001].stats[s][1]) + Number(objects[selectedObjectInd].stats[OldStatInd][1])
+										}
+									}
+								}
+								//also include all new stats in here (done)
+								prevActions.push([17,objects[dragObjectInd9001].UUID,selectedObjectUUID,JSON.parse(JSON.stringify(newStatNames)),JSON.parse(JSON.stringify(OldStatPreserved))])
+								mouseDown = false
+								//draggingObjectUUID = null
+							}
+						}
+					}
+				}
+				
+				
+				
+				canvas.fillText("Base properties",405,60+scrollY)
+				canvas.beginPath()
+				canvas.rect(480,52+scrollY,10,10)
+				canvas.stroke()
+				drawingIndex = 0
+				for (var i = 0; i < drawings.length; i++)
+				{
+						if (drawings[i][1] == -7)
+						{
+								drawingIndex = i
+						}
+				}
+				for (var i = 0; i < drawings[drawingIndex][0].length; i++)
+				{
+					//points
+					if (drawings[drawingIndex][0][i][0])
+					{
+						var startInd = 0
+						canvas.beginPath()
+						canvas.moveTo(480 + drawings[drawingIndex][0][i][startInd][0]  * 10 ,52+drawings[drawingIndex][0][i][startInd][1] * 10+scrollY)
+						for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
+						{
+							if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
+							{
+								canvas.lineTo(480 + drawings[drawingIndex][0][i][k][0] * 10, 52 + drawings[drawingIndex][0][i][k][1] * 10+scrollY)
+							}
+						}
+						canvas.stroke()
+					}
+				}
+				if (mouseDown)
+				{
+					if (cursorX >= 447 && cursorX <= 447+80 && cursorY >= 5+scrollY && cursorY <= 45+scrollY)
+					{
+						prevActions.push([11,objects[selectedObjectInd].UUID,objects[selectedObjectInd].name])
+						objects[selectedObjectInd].name = window.prompt("Rename this object:")
+						mouseDown = false
+					}
+					if (cursorX >= 405 && cursorX <= 445 && cursorY >= 5+scrollY && cursorY <= 45+scrollY)
+					{
+						prevActions.push([12,objects[selectedObjectInd].UUID,objects[selectedObjectInd].drawingUUID])
+						objects[selectedObjectInd].drawingUUID = window.prompt("Set this object's drawing UUID (texture):")
+						mouseDown = false
+					}
+					if (cursorX >= 480 && cursorX <= 490 && cursorY >= 52+scrollY && cursorY <= 62+scrollY)
+					{
+						prevActions.push([13,objects[selectedObjectInd].UUID])
+						objects[selectedObjectInd].stats.push(["unnamed",0])
+						mouseDown = false
+					}
+				}
+				for (var i = 0; i < drawings.length; i++)
+				{
+						if (drawings[i][1] == -6)
+						{
+								drawingIndex = i
+						}
+				}
+				var placerPos = 68+scrollY
+				var toSplice = []
+				for (var i = 0; i < objects[selectedObjectInd].stats.length; i++)
+				{
+					//also put the check for clicking here in here
+					canvas.beginPath()
+					canvas.rect(405,placerPos,80,15)
+					canvas.stroke()
+					canvas.fillText(objects[selectedObjectInd].stats[i][0],407,placerPos+10)
+					if (mouseDown)
+					{
+						if (cursorX >= 405 && cursorX <= 485 && cursorY >= placerPos && cursorY <= placerPos+15)
+						{
+							prevActions.push([14,objects[selectedObjectInd].UUID,i,objects[selectedObjectInd].stats[i][0]])
+							objects[selectedObjectInd].stats[i][0] = window.prompt("Set this stat's name:")
+							mouseDown = false
+						}
+					}
+					canvas.beginPath()
+					canvas.rect(490,placerPos,80,15)
+					canvas.stroke()
+					if (mouseDown)
+					{
+						if (cursorX >= 490 && cursorX <= 490+80 && cursorY >= placerPos && cursorY <= placerPos+15)
+						{
+							prevActions.push([15,objects[selectedObjectInd].UUID,i,objects[selectedObjectInd].stats[i][1]])
+							objects[selectedObjectInd].stats[i][1] = window.prompt("Set this stat's value:")
+							mouseDown = false
+						}
+					}
+					var statSum = objects[selectedObjectInd].stats[i][1]
+					canvas.fillText(statSum, 491,placerPos+10)
+					canvas.beginPath()
+					canvas.rect(580,placerPos,15,15)
+					canvas.stroke()
+					for (var j = 0; j < drawings[drawingIndex][0].length; j++)
+					{
+						//points
+						if (drawings[drawingIndex][0][j][0])
+						{
+							var startInd = 0
+							canvas.beginPath()
+							canvas.moveTo(580 + drawings[drawingIndex][0][j][startInd][0]  * 15 ,placerPos+drawings[drawingIndex][0][j][startInd][1] * 15)
+							for (var k = startInd+1; k < drawings[drawingIndex][0][j].length; k++)
+							{
+								if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][j].length - 1)
+								{
+									canvas.lineTo(580 + drawings[drawingIndex][0][j][k][0] * 15, placerPos + drawings[drawingIndex][0][j][k][1] * 15)
+								}
+							}
+							canvas.stroke()
+						}
+					}
+					if (mouseDown)
+					{
+						if (cursorX >= 580 && cursorX <= 595 && cursorY >= placerPos && cursorY <= placerPos+15)
+						{
+							mouseDown = false
+							toSplice.push(i)
+						}
+					}
+					placerPos = placerPos + 17
+				}
+				//just so we don't alter this array while we are accessing it
+				for (var i = 0; i < toSplice.length; i++)
+				{
+					prevActions.push([16,objects[selectedObjectInd].UUID,JSON.parse(JSON.stringify(objects[selectedObjectInd].stats[toSplice[i]]))])
+					objects[selectedObjectInd].stats.splice(toSplice[i],1)
+				}
+				placerPos = placerPos + 13
+				canvas.fillText("Current stats",405,placerPos)
+				
+				var objsReturned = equipSearch(JSON.parse(JSON.stringify(objects[selectedObjectInd]))) //recursive functions what would I do without you
+				var statTallies = []
+				for (var i = 0; i < objects[selectedObjectInd].stats.length; i++)
+				{
+						statTallies.push([objects[selectedObjectInd].stats[i][0],objects[selectedObjectInd].stats[i][1]])
+				}
+				for (var i = 0; i < objsReturned.length; i++)
+				{
+					for (var s = 0; s < objsReturned[i].stats.length; s++)
+					{
+						var oldStatInd = -1
+						for (var t = 0; t < statTallies.length; t++)
+						{
+							if (statTallies[t][0].toLowerCase() == objsReturned[i].stats[s][0].toLowerCase())
+							{
+									oldStatInd = t
+							}
+						}
+						if (oldStatInd != -1)
+						{
+							if (isNaN(objsReturned[i].stats[s][1]) || isNaN(statTallies[oldStatInd][1]))
+							{
+								statTallies[oldStatInd][1] = objsReturned[i].stats[s][1]  + ", " +  statTallies[oldStatInd][1]
+							}
+							else
+							{
+								statTallies[oldStatInd][1] = Number(statTallies[oldStatInd][1]) + Number(objsReturned[i].stats[s][1])
+							}
+						}
+						else
+						{
+							statTallies.push([objsReturned[i].stats[s][0],objsReturned[i].stats[s][1]])
+						}
+					}
+				}
+				for (var i = 0; i < statTallies.length; i++)
+				{
+					canvas.fillText(statTallies[i][0]+": "+statTallies[i][1],407,placerPos+10)
+					placerPos = placerPos + 9
+				}
+				
+				
+				var placerXPos = 0; //inventory objects should be 35x35
+				placerPos = placerPos + 12
+				canvas.fillText("Equipment", 405,placerPos)
+				placerPos = placerPos + 12
+				for (var i = 0; i < objects[selectedObjectInd].equipment.length; i++)
+				{
+					canvas.beginPath()
+					canvas.rect(405+placerXPos,placerPos,35,35)
+					canvas.stroke()
+					drawingIndex = 0
+					for (var j = 0; j < drawings.length; j++)
+					{
+							if (drawings[j][1] == objects[selectedObjectInd].equipment[i].drawingUUID)
+							{
+									drawingIndex = j
+							}
+					}
+					for (var j = 0; j < drawings[drawingIndex][0].length; j++)
+					{
+						//points
+						if (drawings[drawingIndex][0][j][0])
+						{
+							var startInd = 0
+							canvas.beginPath()
+							canvas.moveTo(405+placerXPos + drawings[drawingIndex][0][j][startInd][0]  * 33 + 1 , placerPos +drawings[drawingIndex][0][j][startInd][1] * 33 + 1)
+							for (var k = startInd+1; k < drawings[drawingIndex][0][j].length; k++)
+							{
+								if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][j].length - 1)
+								{
+									canvas.lineTo(405 +placerXPos + drawings[drawingIndex][0][j][k][0] * 33 + 1, placerPos + drawings[drawingIndex][0][j][k][1] * 33 + 1)
+								}
+							}
+							canvas.stroke()
+						}
+					}
+					if (mouseDown)
+					{
+						if (draggingObjectUUID == null)
+						{
+							if (cursorX >= 405+placerXPos && cursorX <= 440+placerXPos && cursorY >= placerPos && cursorY <= placerPos+35)
+							{
+								draggingObjectUUID = objects[selectedObjectInd].equipment[i].UUID
+								prevActions.push([10,selectedObjectUUID,draggingObjectUUID])
+								objects.push(JSON.parse(JSON.stringify(objects[selectedObjectInd].equipment[i])))
+								objects[selectedObjectInd].equipment.splice(i,1) //sorry array
+								mouseDown = false
+							}
+						}
+					}
+					
+					
+					placerXPos = placerXPos + 39
+					if (placerXPos > 160)
+					{
+							placerXPos = 0
+							placerPos = placerPos + 39
+					}
+				}
+				//now we basically render an empty box so you can add to equipment.
+				canvas.beginPath()
+				canvas.rect(405+placerXPos,placerPos,35,35)
+				canvas.stroke()
+				if (mouseDown)
+				{
+					if (draggingObjectUUID != null)
+					{
+						if (cursorX >= 405+placerXPos && cursorX <= 440+placerXPos && cursorY >= placerPos && cursorY <= placerPos+35)
+						{
+							for (var i = 0; i < objects.length; i++)
+							{
+								if (objects[i].UUID == draggingObjectUUID)
+								{
+									if (objects[i].UUID != objects[selectedObjectInd].UUID)
+									{
+										prevActions.push([9,JSON.parse(JSON.stringify(objects[i])), draggingObjectUUID, objects[selectedObjectInd].UUID])
+										objects[selectedObjectInd].equipment.push(JSON.parse(JSON.stringify(objects[i])))
+										draggingObjectUUID = null
+										objects.splice(i,1) //sorry again array
+									}
+								}
+							}
+							mouseDown = false
+						}
+					}
+				}
+				placerPos = placerPos + 52
+				placerXPos = 0
+				canvas.fillText("Stats of all in inventory",405,placerPos)
+				
+				objsReturned = invSearch(JSON.parse(JSON.stringify(objects[selectedObjectInd]))) //recursive functions what would I do without you
+				statTallies = []
+				for (var i = 0; i < objsReturned.length; i++)
+				{
+					for (var s = 0; s < objsReturned[i].stats.length; s++)
+					{
+						var oldStatInd = -1
+						for (var t = 0; t < statTallies.length; t++)
+						{
+							if (statTallies[t][0].toLowerCase() == objsReturned[i].stats[s][0].toLowerCase())
+							{
+									oldStatInd = t
+							}
+						}
+						if (oldStatInd != -1)
+						{
+							if (isNaN(objsReturned[i].stats[s][1]) || isNaN(statTallies[oldStatInd][1]))
+							{
+								statTallies[oldStatInd][1] = objsReturned[i].stats[s][1] + ", " +  statTallies[oldStatInd][1] 
+							}
+							else
+							{
+								statTallies[oldStatInd][1] = Number(statTallies[oldStatInd][1]) + Number(objsReturned[i].stats[s][1])
+							}
+						}
+						else
+						{
+							statTallies.push([objsReturned[i].stats[s][0],objsReturned[i].stats[s][1]])
+						}
+					}
+				}
+				for (var i = 0; i < statTallies.length; i++)
+				{
+					canvas.fillText(statTallies[i][0]+": "+statTallies[i][1],407,placerPos+10)
+					placerPos = placerPos + 9
+				}
+				
+				
+				placerPos = placerPos + 12
+				canvas.fillText("Inventory", 405,placerPos)
+				placerPos = placerPos + 12
+				for (var i = 0; i < objects[selectedObjectInd].inventory.length; i++)
+				{
+					canvas.beginPath()
+					canvas.rect(405+placerXPos,placerPos,35,35)
+					canvas.stroke()
+					drawingIndex = 0
+					for (var j = 0; j < drawings.length; j++)
+					{
+							if (drawings[j][1] == objects[selectedObjectInd].inventory[i].drawingUUID)
+							{
+									drawingIndex = j
+							}
+					}
+					for (var j = 0; j < drawings[drawingIndex][0].length; j++)
+					{
+						//points
+						if (drawings[drawingIndex][0][j][0])
+						{
+							var startInd = 0
+							canvas.beginPath()
+							canvas.moveTo(405+placerXPos + drawings[drawingIndex][0][j][startInd][0]  * 33 + 1 , placerPos +drawings[drawingIndex][0][j][startInd][1] * 33 + 1)
+							for (var k = startInd+1; k < drawings[drawingIndex][0][j].length; k++)
+							{
+								if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][j].length - 1)
+								{
+									canvas.lineTo(405 +placerXPos + drawings[drawingIndex][0][j][k][0] * 33 + 1, placerPos + drawings[drawingIndex][0][j][k][1] * 33 + 1)
+								}
+							}
+							canvas.stroke()
+						}
+					}
+					if (mouseDown)
+					{
+						if (draggingObjectUUID == null)
+						{
+							if (cursorX >= 405+placerXPos && cursorX <= 440+placerXPos && cursorY >= placerPos && cursorY <= placerPos+35)
+							{
+								draggingObjectUUID = objects[selectedObjectInd].inventory[i].UUID
+								prevActions.push([8,selectedObjectUUID,draggingObjectUUID])
+								objects.push(JSON.parse(JSON.stringify(objects[selectedObjectInd].inventory[i])))
+								objects[selectedObjectInd].inventory.splice(i,1) //sorry array
+								mouseDown = false
+							}
+						}
+					}
+					
+					
+					placerXPos = placerXPos + 39
+					if (placerXPos > 160)
+					{
+							placerXPos = 0
+							placerPos = placerPos + 39
+					}
+				}
+				//now we basically render an empty box so you can add to the inventory.
+				canvas.beginPath()
+				canvas.rect(405+placerXPos,placerPos,35,35)
+				canvas.stroke()
+				if (mouseDown)
+				{
+					if (draggingObjectUUID != null)
+					{
+						if (cursorX >= 405+placerXPos && cursorX <= 440+placerXPos && cursorY >= placerPos && cursorY <= placerPos+35)
+						{
+							for (var i = 0; i < objects.length; i++)
+							{
+								if (objects[i].UUID == draggingObjectUUID)
+								{
+									if (objects[i].UUID != objects[selectedObjectInd].UUID)
+									{
+										prevActions.push([7,JSON.parse(JSON.stringify(objects[i])), draggingObjectUUID, objects[selectedObjectInd].UUID])
+										objects[selectedObjectInd].inventory.push(JSON.parse(JSON.stringify(objects[i])))
+										draggingObjectUUID = null
+										objects.splice(i,1) //sorry again array
+									}
+								}
+							}
+							mouseDown = false
+						}
+					}
+				}
+			}
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+    }
+}
+startAnimating(60);
+
+</script>
