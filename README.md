@@ -6,8 +6,7 @@ Sorry this is so unbelievably wrong for a Github repo. The only thing of interes
 I simply wanted to get this out there, on the internet, so I could say I was the first guy to make this.
 I had an inexplicable paranoia that my code would be stolen before I could unlicense it.
 Now that that is out of the way, you are free to do anything with this.
-Use it. Stream it. Modify it. Share it with friends. Sell it to a triple-A game studio and have them make Dumb Doodle Dungeon VII. Claim it as your own except it sort of is but I still made the first version of it and you know it.
-
+Use it. Stream it. Modify it. Share it with friends. Sell it to a triple-A game studio and have them make Dumb Doodle Dungeon VII. The world is your oyster.
 
 ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
 
