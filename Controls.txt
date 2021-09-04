@@ -1,0 +1,10 @@
+<CONTROLS>
+WASD: Move the camera.
+N (hold): Create a new object.
+T (hold): Draw terrain.
+Click: Select an object at a position.
+Shift + click: Select an object at a position.
+X + click: Delete the objects or terrain at a position.
+P (hold): Paint objects or terrain with the selected drawing UUID.
+L (press): Select a drawing UUID to paint with.
+J (press): Load drawing from JSON.
