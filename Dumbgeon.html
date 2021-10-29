@@ -827,7 +827,7 @@ function animate() {
 									if (outTXT.length > 0)
 									{
 										var outParsed = JSON.parse(outTXT)
-										if (outParsed.length > 0)
+										if (outParsed.length > 0 && outParsed.flat().length > 0)
 										{
 											drawings[i][0] = outParsed
 										}
