@@ -17,6 +17,7 @@ var draggingObjectUUID;
 var cursorX = 0
 var cursorY = 0
 var scrollY = 0
+var PIDscrollY = 0
 //var scrollX = 0 //no need for this now
 
 var mouseWheelDeltaYFrame = 0
@@ -32,7 +33,7 @@ var zoomsize = 25
 var maxActions = 1500
 var prevPlacedPosX;
 var prevPlacedPosY;
-var paintingUUID = -2
+var paintingUUID = -1
 
 var DrawingUUIDCounter = -1
 var ObjectUUIDCounter = -1
@@ -58,6 +59,7 @@ drawings.push([JSON.parse("[[[0.144,0.253],[0.184,0.248],[0.21,0.238],[0.24,0.23
 drawings.push([JSON.parse("[[[0.56,0.874],[0.558,0.878],[0.552,0.88],[0.548,0.884],[0.546,0.888],[0.542,0.894],[0.532,0.902],[0.516,0.904],[0.446,0.884],[0.408,0.866],[0.354,0.832],[0.29,0.786],[0.224,0.726],[0.166,0.672],[0.142,0.652],[0.138,0.648],[0.14,0.61],[0.144,0.434],[0.166,0.386],[0.204,0.326],[0.25,0.266],[0.298,0.212],[0.354,0.168],[0.42,0.138],[0.498,0.114],[0.558,0.102],[0.664,0.112],[0.734,0.146],[0.842,0.234],[0.908,0.314],[0.946,0.392],[0.958,0.452],[0.952,0.58],[0.946,0.664],[0.926,0.736],[0.892,0.786],[0.846,0.826],[0.802,0.856],[0.76,0.876],[0.688,0.886],[0.504,0.884],[0.406,0.888],[0.382,0.88]],[[0.554,0.492],[0.558,0.49],[0.568,0.494],[0.57,0.498],[0.574,0.51],[0.572,0.52],[0.566,0.522],[0.548,0.516],[0.546,0.502],[0.552,0.488]],[[0.564,0.482],[0.566,0.352],[0.568,0.328],[0.572,0.3],[0.574,0.28],[0.576,0.256],[0.578,0.21],[0.58,0.204]],[[0.57,0.506],[0.576,0.504],[0.59,0.498],[0.608,0.492],[0.622,0.488],[0.634,0.484],[0.65,0.478],[0.674,0.468],[0.694,0.458],[0.72,0.452],[0.748,0.446],[0.782,0.444],[0.786,0.442],[0.79,0.44],[0.796,0.436],[0.806,0.432],[0.818,0.426],[0.832,0.42],[0.836,0.416]],[]]"),-12])
 drawings.push([JSON.parse("[[[0.138,0.136],[0.142,0.184],[0.148,0.228],[0.156,0.29],[0.158,0.342],[0.154,0.482],[0.156,0.596],[0.162,0.66],[0.164,0.708],[0.162,0.774],[0.16,0.806],[0.158,0.824],[0.16,0.902],[0.286,0.898],[0.354,0.888],[0.452,0.886],[0.572,0.898],[0.688,0.912],[0.85,0.908],[0.876,0.902],[0.886,0.898],[0.892,0.894],[0.9,0.886],[0.906,0.876],[0.908,0.87],[0.906,0.832],[0.902,0.81],[0.892,0.772],[0.872,0.708],[0.858,0.64],[0.856,0.584],[0.864,0.398],[0.872,0.314],[0.878,0.264],[0.88,0.206],[0.872,0.164],[0.87,0.134],[0.868,0.116],[0.866,0.112],[0.836,0.118],[0.808,0.124],[0.77,0.13],[0.736,0.132],[0.694,0.134],[0.416,0.132],[0.348,0.128],[0.254,0.124],[0.14,0.126],[0.138,0.128],[0.13,0.132],[0.128,0.134]],[[0.33,0.272],[0.318,0.276],[0.308,0.282],[0.292,0.304],[0.286,0.328],[0.29,0.372],[0.296,0.378],[0.312,0.384],[0.332,0.386],[0.356,0.384],[0.372,0.372],[0.384,0.352],[0.392,0.336],[0.382,0.266],[0.366,0.25],[0.354,0.242],[0.346,0.24],[0.33,0.244],[0.32,0.25],[0.316,0.254]],[[0.674,0.252],[0.654,0.274],[0.636,0.304],[0.624,0.336],[0.618,0.364],[0.62,0.392],[0.626,0.396],[0.642,0.398],[0.664,0.394],[0.694,0.37],[0.71,0.346],[0.72,0.32],[0.732,0.3],[0.738,0.286],[0.73,0.272],[0.716,0.27]],[[0.326,0.468],[0.316,0.486],[0.304,0.5],[0.29,0.516],[0.28,0.532],[0.27,0.554],[0.282,0.598],[0.304,0.612],[0.344,0.614],[0.364,0.61],[0.376,0.604],[0.384,0.594],[0.392,0.576],[0.4,0.554],[0.402,0.538],[0.398,0.528],[0.382,0.522],[0.346,0.528]],[[0.704,0.466],[0.674,0.472],[0.654,0.486],[0.636,0.51],[0.624,0.542],[0.62,0.578],[0.618,0.608],[0.628,0.614],[0.694,0.602],[0.718,0.588],[0.73,0.574],[0.736,0.562],[0.73,0.518],[0.704,0.498],[0.674,0.488]],[[0.336,0.686],[0.316,0.69],[0.3,0.704],[0.286,0.718],[0.276,0.73],[0.272,0.746],[0.268,0.762],[0.27,0.776],[0.282,0.78],[0.302,0.786],[0.33,0.794],[0.366,0.804],[0.43,0.79],[0.442,0.774],[0.446,0.758],[0.448,0.746],[0.446,0.734],[0.43,0.716],[0.406,0.694],[0.37,0.67],[0.33,0.65],[0.32,0.648],[0.316,0.65]],[[0.72,0.644],[0.692,0.658],[0.668,0.678],[0.648,0.704],[0.634,0.732],[0.624,0.756],[0.618,0.766],[0.624,0.776],[0.698,0.796],[0.782,0.786],[0.786,0.776],[0.788,0.764],[0.786,0.748],[0.774,0.726],[0.756,0.698],[0.73,0.67],[0.71,0.664],[0.688,0.67]],[]]"),-13])
 drawings.push([JSON.parse("[[[0.058,0.11],[0.072,0.138],[0.082,0.166],[0.102,0.196],[0.126,0.224],[0.162,0.26],[0.216,0.31],[0.298,0.388],[0.32,0.408],[0.33,0.412]],[[0.334,0.408],[0.346,0.392],[0.366,0.372],[0.386,0.346],[0.412,0.32],[0.442,0.286],[0.454,0.264],[0.47,0.24],[0.486,0.22],[0.502,0.2],[0.512,0.186],[0.516,0.176]],[[0.058,0.094],[0.076,0.098],[0.114,0.102],[0.168,0.108],[0.23,0.114],[0.266,0.118],[0.306,0.12],[0.34,0.124],[0.38,0.126],[0.444,0.128],[0.514,0.13],[0.532,0.132],[0.546,0.134],[0.55,0.136],[0.558,0.142],[0.572,0.148],[0.582,0.154]],[[0.182,0.158],[0.174,0.16],[0.172,0.164],[0.17,0.168],[0.168,0.178],[0.174,0.198],[0.18,0.204],[0.184,0.206],[0.208,0.204],[0.214,0.2],[0.216,0.198],[0.218,0.188],[0.22,0.178],[0.212,0.154],[0.206,0.15],[0.202,0.148]],[[0.386,0.174],[0.376,0.182],[0.364,0.188],[0.356,0.194],[0.35,0.204],[0.346,0.214],[0.352,0.234],[0.36,0.236],[0.374,0.238],[0.386,0.236],[0.396,0.23],[0.4,0.22],[0.402,0.212],[0.4,0.192],[0.398,0.19],[0.396,0.188],[0.39,0.182],[0.384,0.178]],[[0.28,0.272],[0.274,0.276],[0.28,0.312],[0.286,0.318],[0.296,0.322],[0.306,0.326],[0.318,0.324],[0.326,0.308],[0.32,0.276],[0.31,0.268],[0.306,0.264]],[[0.326,0.7],[0.348,0.678],[0.366,0.66],[0.382,0.642],[0.4,0.624],[0.416,0.604],[0.436,0.586],[0.454,0.566],[0.478,0.544],[0.498,0.522],[0.518,0.502],[0.534,0.482],[0.548,0.47],[0.564,0.452],[0.578,0.438],[0.59,0.426],[0.598,0.416],[0.604,0.412],[0.608,0.406],[0.61,0.402],[0.612,0.4],[0.614,0.398]],[[0.61,0.4],[0.624,0.422],[0.64,0.442],[0.654,0.466],[0.668,0.49],[0.68,0.514],[0.694,0.54],[0.712,0.568],[0.734,0.596],[0.75,0.614],[0.768,0.634],[0.782,0.652],[0.798,0.674],[0.816,0.69],[0.828,0.702],[0.834,0.706],[0.84,0.71],[0.842,0.714],[0.844,0.716],[0.848,0.718],[0.852,0.726],[0.856,0.728],[0.858,0.732]],[[0.86,0.736],[0.858,0.74],[0.848,0.752],[0.842,0.764],[0.816,0.79],[0.796,0.81],[0.772,0.836],[0.752,0.858],[0.736,0.876],[0.726,0.894],[0.718,0.906],[0.712,0.912],[0.71,0.916],[0.708,0.92],[0.706,0.922],[0.704,0.924],[0.702,0.928]],[[0.694,0.938],[0.674,0.94],[0.63,0.942],[0.612,0.944],[0.586,0.948],[0.496,0.95],[0.468,0.954],[0.452,0.956],[0.436,0.958],[0.404,0.96],[0.39,0.962]],[[0.386,0.956],[0.382,0.94],[0.376,0.92],[0.37,0.898],[0.366,0.878],[0.362,0.858],[0.358,0.838],[0.348,0.812],[0.332,0.776],[0.33,0.76],[0.328,0.748],[0.326,0.732],[0.324,0.718],[0.316,0.702],[0.314,0.694],[0.312,0.68]],[[0.566,0.676],[0.554,0.68],[0.548,0.688],[0.538,0.696],[0.528,0.704],[0.518,0.714],[0.506,0.734],[0.5,0.75],[0.498,0.768],[0.502,0.79],[0.508,0.798],[0.512,0.804],[0.522,0.808],[0.534,0.812],[0.554,0.816],[0.584,0.812],[0.602,0.802],[0.608,0.796],[0.61,0.788],[0.612,0.778],[0.608,0.766],[0.606,0.756],[0.6,0.748],[0.594,0.736],[0.588,0.73],[0.582,0.722],[0.57,0.716],[0.564,0.712],[0.558,0.71],[0.552,0.708],[0.542,0.704],[0.532,0.702]],[]]"),-14])
+drawings.reverse()
 //created by Daxturus
 
 
@@ -227,6 +229,7 @@ document.body.onmousedown = function() {
 				{
 					clickPosX = cameraX + Math.floor(cursorX / zoomsize)
 					clickPosY = cameraY + Math.floor(cursorY / zoomsize)
+					var foundObject = false
 					for (var i = 0; i < objects.length; i++)
 					{
 						 if (objects[i].x == clickPosX && objects[i].y == clickPosY)
@@ -234,9 +237,14 @@ document.body.onmousedown = function() {
 							 if (objects[i].UUID != selectedObjectUUID)
 							 {
 								prevActions.push([4,selectedObjectUUID])
+								foundObject = true
 								selectedObjectUUID = objects[i].UUID
 							 }
 						 }
+					}
+					if (foundObject == false)
+					{
+						selectedObjectUUID = -1
 					}
 				}
 			}
@@ -696,7 +704,7 @@ function animate() {
 							y: Y,
 							name: "Object"+ObjectUUIDCounter,
 							UUID: ObjectUUIDCounter,
-							drawingUUID: -1,
+							drawingUUID: paintingUUID,
 							stats: [],
 							inventory: [],
 							equipment: []
@@ -707,20 +715,23 @@ function animate() {
 				}
 				if (currKey == "P" ||  currKey == "p")
 				{
-					var X = cameraX + Math.floor(cursorX / zoomsize)
-					var Y = cameraY + Math.floor(cursorY / zoomsize)
-					for (var i = 0; i < objects.length; i++)
+					if (mouseDown)
 					{
-						if (objects[i].x == X && objects[i].y == Y)
+						var X = cameraX + Math.floor(cursorX / zoomsize)
+						var Y = cameraY + Math.floor(cursorY / zoomsize)
+						for (var i = 0; i < objects.length; i++)
 						{
-							objects[i].drawingUUID = paintingUUID
+							if (objects[i].x == X && objects[i].y == Y)
+							{
+								objects[i].drawingUUID = paintingUUID
+							}
 						}
-					}
-					for (var i = 0; i < terrain.length; i++)
-					{
-						if (terrain[i].x == X && terrain[i].y == Y)
+						for (var i = 0; i < terrain.length; i++)
 						{
-							terrain[i].drawingUUID = paintingUUID
+							if (terrain[i].x == X && terrain[i].y == Y)
+							{
+								terrain[i].drawingUUID = paintingUUID
+							}
 						}
 					}
 				}
@@ -757,9 +768,51 @@ function animate() {
 		
 		
 		
-		
-		
-		
+		if (cursorX >= 400 && cursorX <= 600)
+		{
+			scrollY = scrollY - mouseWheelDeltaYFrame / 10
+			if (scrollY > 0)
+			{
+				scrollY = 0
+			}
+		}
+		if (cursorY < 50 && cursorX > 105 && cursorX < 400)
+		{
+			PIDscrollY = PIDscrollY - mouseWheelDeltaYFrame / 10
+			if (PIDscrollY > 0)
+			{
+				PIDscrollY = 0
+			}
+		}
+		canvas.fillStyle = "#000000"
+		for (var i = 0; i < drawings.length; i++)
+		{
+			var PictureXPos = 105+50*(i % 5)
+			var PictureYPos = 50*Math.floor(i/5) + PIDscrollY
+			if (PictureYPos >= -50 && PictureYPos <= 50)
+			{
+				canvas.beginPath()
+				canvas.rect(PictureXPos,PictureYPos,50,50)
+				canvas.stroke()
+				canvas.fillText("ID: "+drawings[i][1],PictureXPos+2,PictureYPos+10)
+				if (mouseDown == true)
+				{
+					if (cursorX < 400 && cursorX > 105 && cursorY < 50 && cursorY > 0)
+					{
+						if (cursorX > PictureXPos && cursorX < PictureXPos+50 && cursorY > PictureYPos && cursorY < PictureYPos + 50)
+						{
+							paintingUUID = drawings[i][1]
+							mouseDown = false
+						}
+					}
+				}
+				drawSomething(drawings[i][1],PictureXPos+5,PictureYPos+15,30,30)
+			}
+		}
+		canvas.fillStyle = "#ffffff"
+		canvas.fillRect(0,0,105,screen.height)
+		canvas.fillRect(0,50,screen.width,screen.height)
+		canvas.fillRect(400,0,screen.width,screen.height)
 		
 		
 		
@@ -849,7 +902,7 @@ function animate() {
 		canvas.rect(0,0,105,50)
 		canvas.stroke()
 		canvas.beginPath()
-		canvas.rect(350,0,50,50)
+		canvas.rect(355,0,45,50)
 		canvas.stroke()
 		canvas.beginPath()
 		canvas.rect(105,0,295,50)
@@ -1068,18 +1121,18 @@ function animate() {
 			{
 				var startInd = 0
 				canvas.beginPath()
-				canvas.moveTo(350 + drawings[drawingIndex][0][i][startInd][0]  * 50 ,drawings[drawingIndex][0][i][startInd][1] * 50)
+				canvas.moveTo(355 + drawings[drawingIndex][0][i][startInd][0]  * 45 ,drawings[drawingIndex][0][i][startInd][1] * 50)
 				for (var k = startInd+1; k < drawings[drawingIndex][0][i].length; k++)
 				{
 					if (Math.random() > drawJitter || k >= drawings[drawingIndex][0][i].length - 1)
 					{
-						canvas.lineTo(350 + drawings[drawingIndex][0][i][k][0] * 50, drawings[drawingIndex][0][i][k][1] * 50)
+						canvas.lineTo(355 + drawings[drawingIndex][0][i][k][0] * 45, drawings[drawingIndex][0][i][k][1] * 50)
 					}
 				}
 				canvas.stroke()
 			}
 		}
-		if (cursorX >= 350 && cursorX <= 400 && cursorY >= 0 && cursorY <= 50)
+		if (cursorX >= 355 && cursorX <= 400 && cursorY >= 0 && cursorY <= 50)
 		{
 			if (draggingObjectUUID != null)
 			{
@@ -1103,29 +1156,6 @@ function animate() {
 			}
 		}
 		
-		if (cursorX >= 350 && cursorX <= 400 && cursorY >= 0 && cursorY <= 50)
-		{
-			if (draggingObjectUUID != null)
-			{
-				if (mouseDown)
-				{
-					var draggedObjectInd = -1
-					for (var j = 0; j < objects.length; j++)
-					{
-						if (objects[j].UUID == draggingObjectUUID)
-						{
-							draggedObjectInd = j
-						}
-					}
-					if (draggedObjectInd != -1)
-					{
-						prevActions.push([18,JSON.parse(JSON.stringify(objects[draggedObjectInd]))])
-						objects.splice(draggedObjectInd,1)
-						draggingObjectUUID = null
-					}
-				}
-			}
-		}
 		
 		canvas.beginPath()
 		canvas.rect(5,6,15,15)
@@ -1232,14 +1262,6 @@ function animate() {
 			console.error(error);
 		}
 		canvas.fillStyle = "#000000"
-		if (cursorX >= 400 && cursorX <= 600)
-		{
-			scrollY = scrollY - mouseWheelDeltaYFrame / 10
-			if (scrollY > 0)
-			{
-				scrollY = 0
-			}
-		}
 		mouseWheelDeltaYFrame = 0
 		if (selectedObjectUUID == null)
 		{
@@ -1247,14 +1269,16 @@ function animate() {
 		}
 		if (selectedObjectUUID <= -1)
 		{
-			if (objects.length <= 0)
-			{
-				canvas.fillText("Press N to create an object",405,10+scrollY)
-			}
-			else
-			{
-				canvas.fillText("Shift-Click an object to select it",405,10+scrollY)
-			}
+			canvas.fillText("Controls: ",405,10+scrollY)
+			canvas.fillText("Press N to create an object",405,25+scrollY)
+			canvas.fillText("Click on an object to drag it",405,40+scrollY)
+			canvas.fillText("Shift-click on an object to select it",405,55+scrollY)
+			canvas.fillText("Press/hold T to create terrain",405,70+scrollY)
+			canvas.fillText("Hold X and click to delete objects",405,85+scrollY)
+			canvas.fillText("Press P and hold mouse to paint objects",405,100+scrollY)
+			canvas.fillText("Press J to import picture from JSON",405,115+scrollY)
+			canvas.fillText("Press L to select a drawing to paint with",405,130+scrollY)
+			canvas.fillText("Press Z to undo most actions",405,145+scrollY)
 		}
 		else
 		{
