@@ -235,10 +235,10 @@ document.body.onmousedown = function() {
 					{
 						 if (objects[i].x == clickPosX && objects[i].y == clickPosY)
 						 {
+							 foundObject = true
 							 if (objects[i].UUID != selectedObjectUUID)
 							 {
 								prevActions.push([4,selectedObjectUUID])
-								foundObject = true
 								selectedObjectUUID = objects[i].UUID
 							 }
 						 }
