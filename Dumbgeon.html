@@ -616,11 +616,14 @@ document.onkeypress = function(e)
 
 	if (e.key == "J" || e.key == "j")
 	{
-		DrawingUUIDCounter++;
 		var thing = JSON.parse(window.prompt("Insert JSON here:"))
-		var out = [thing,DrawingUUIDCounter]
-		drawings.push(out)
-		alert("Drawing added with ID "+ DrawingUUIDCounter +": "+out)
+		if (thing.length > 0)
+		{
+			DrawingUUIDCounter++;
+			var out = [thing,DrawingUUIDCounter]
+			drawings.push(out)
+			alert("Drawing added with ID "+ DrawingUUIDCounter +": "+out)
+		}
 	}
 	if (e.key == "L" || e.key == "l")
 	{
