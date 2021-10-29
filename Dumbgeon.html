@@ -1204,9 +1204,13 @@ function animate() {
 				}
 				else
 				{
+					var Precision1 = (MinRoll + ". ").split(".")[1].length;
+					var Precision2 = (MaxRoll + ". ").split(".")[1].length;
+					var NumPrecision = Precision1 > Precision2 ? Precision1 : Precision2
+					var FinalPrecision = Math.pow(10,NumPrecision)
 					for (var i = 0; i < Rolls; i++)
 					{
-						RolledDice.push((MinRoll+Math.random()*DiffRoll))
+						RolledDice.push(Math.floor(MinRoll+Math.random()*DiffRoll*FinalPrecision)/FinalPrecision)
 					}
 				}
 				console.log(RolledDice)
