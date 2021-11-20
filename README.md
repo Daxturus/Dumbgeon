@@ -2,7 +2,7 @@
 A game where you draw crappy art to use as figures/characters/objects and manage the stats of those figures/characters/objects yourself. Kind of like an easy but hands-on DND tool, except it probably doesn't have to be used for just dungeons and dragons.
 
 
-Sorry this is so unbelievably wrong for a Github repo. The only thing of interest is a text file containing HTML used to parse Javascript.
+Sorry this is so unbelievably wrong for a Github repo. Everything you need is in one file.
 I simply wanted to get this out there, on the internet, so I could say I was the first guy to make this.
 I had an inexplicable paranoia that my code would be stolen before I could unlicense it.
 Now that that is out of the way, you are free to do anything with this.
